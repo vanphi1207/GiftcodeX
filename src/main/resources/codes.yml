@@ -1,0 +1,48 @@
+# ┌──────────────────────────────────────────────────────┐
+# │              GiftcodeX  ·  codes.yml                 │
+# │         All gift codes are stored here.              │
+# └──────────────────────────────────────────────────────┘
+#
+# You can edit this file manually or use the in-game GUI editor.
+# After editing, run /gcx reload to apply changes without restarting.
+#
+# Field reference:
+#   commands          - Console commands to run on redemption (%player% = player name)
+#   messages          - Messages sent to the player on redemption (& colour codes)
+#   max-uses          - Remaining global uses. Set to 999999999 for "unlimited".
+#   expiry            - ISO-8601 expiry date, or leave empty for no expiry.
+#   enabled           - true/false
+#   player-max-uses   - Per-player redemption limit. -1 = unlimited.
+#   max-uses-per-ip   - Per-IP redemption limit. 0 = disabled.
+#   required-playtime - Minimum playtime in minutes. 0 = no requirement.
+#   permission        - Required permission node. Leave empty for none.
+#   items             - List of ItemStack serialized item rewards (set via GUI).
+
+WELCOME2024:
+  commands:
+    - "give %player% diamond 3"
+    - "give %player% golden_apple 1"
+  messages:
+    - "&aWelcome! You received &e3 Diamonds &aand a &eGolden Apple&a!"
+  max-uses: 1000
+  expiry: "2024-12-31T23:59:59"
+  enabled: true
+  player-max-uses: 1
+  max-uses-per-ip: 2
+  required-playtime: 0
+  permission: ""
+  items: []
+
+VIP_ONLY:
+  commands:
+    - "give %player% netherite_ingot 1"
+  messages:
+    - "&6[VIP] &eYou received a Netherite Ingot for being a VIP!"
+  max-uses: 50
+  expiry: ""
+  enabled: true
+  player-max-uses: 1
+  max-uses-per-ip: 1
+  required-playtime: 60
+  permission: "giftcodex.vip"
+  items: []

@@ -1,0 +1,30 @@
+name: GiftcodeX
+version: '${project.version}'
+main: me.ihqqq.giftcodeX.GiftcodeX
+api-version: '1.21'
+folia-supported: true
+prefix: GiftcodeX
+author: ihqqq
+description: Advanced gift code management plugin with GUI editor and PlaceholderAPI support.
+
+softdepend:
+  - PlaceholderAPI
+
+commands:
+  giftcodex:
+    description: Admin command for managing gift codes
+    usage: /giftcodex <subcommand>
+    aliases: [ gcx, gc ]
+    permission: giftcodex.admin
+  redeem:
+    description: Redeem a gift code
+    usage: /redeem <code>
+    permission: giftcodex.player
+
+permissions:
+  giftcodex.admin:
+    description: Full access to gift code administration
+    default: op
+  giftcodex.player:
+    description: Allows players to redeem gift codes
+    default: true
