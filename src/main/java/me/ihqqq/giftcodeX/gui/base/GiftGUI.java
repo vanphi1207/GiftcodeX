@@ -23,6 +23,16 @@ public abstract class GiftGUI {
             "ɴ", "ᴏ", "ᴘ", "ǫ", "ʀ", "ꜱ", "ᴛ", "ᴜ", "ᴠ", "ᴡ", "x", "ʏ", "ᴢ"
     };
 
+
+    protected static final String C_LABEL   = "§7";
+    protected static final String C_VALUE   = "§f";
+    protected static final String C_GOOD    = "§a";
+    protected static final String C_BAD     = "§c";
+    protected static final String C_WARN    = "§e";
+    protected static final String C_SPECIAL = "§b";
+    protected static final String C_HINT    = "§8";
+    protected static final String C_SEP     = "§8";
+
     protected final GiftcodeX plugin;
     protected final Player viewer;
     protected Inventory inventory;
@@ -31,6 +41,7 @@ public abstract class GiftGUI {
         this.plugin = plugin;
         this.viewer = viewer;
     }
+
 
 
     public final void open() {
@@ -45,8 +56,8 @@ public abstract class GiftGUI {
 
     public abstract void handleClick(InventoryClickEvent event);
 
-    public void handleDrag(InventoryDragEvent event)    { event.setCancelled(true); }
-    public void handleClose(InventoryCloseEvent event)  {  }
+    public void handleDrag(InventoryDragEvent event)   { event.setCancelled(true); }
+    public void handleClose(InventoryCloseEvent event) { }
 
     protected void close() {
         plugin.getGuiListener().deregister(viewer.getUniqueId());
@@ -65,26 +76,48 @@ public abstract class GiftGUI {
     protected ItemStack action(Material material, String name, String... lore) {
         return new ItemBuilder(material)
                 .name("&f" + sc(name))
-                .lore(styleLore(lore))
+                .lore(hintLore(lore))
                 .build();
     }
 
     protected ItemStack actionGlow(Material material, String name, String... lore) {
         return new ItemBuilder(material)
                 .name("&f" + sc(name))
-                .lore(styleLore(lore))
+                .lore(hintLore(lore))
                 .glow()
                 .build();
     }
 
-
     protected List<String> styleLore(String... lines) {
         List<String> lore = new ArrayList<>();
         for (String line : lines) {
-            lore.add(line == null || line.isEmpty() ? "" : "&8" + sc(line));
+            lore.add(line == null || line.isEmpty() ? "" : C_HINT + sc(line));
         }
         return lore;
     }
+
+    protected List<String> hintLore(String... lines) {
+        List<String> lore = new ArrayList<>();
+        for (String line : lines) {
+            lore.add(line == null || line.isEmpty() ? "" : C_HINT + sc(line));
+        }
+        return lore;
+    }
+
+    protected String loreLine(String label, String value, String color) {
+        return C_LABEL + sc(label + " • ") + color + sc(value);
+    }
+
+
+    protected String loreSep() {
+        return C_SEP + "  ─────────────────";
+    }
+
+
+    protected String loreAction(String text) {
+        return C_HINT + sc("⬡ " + text);
+    }
+
 
     protected String title(String text) {
         return ChatColor.WHITE + sc(text);
@@ -95,7 +128,7 @@ public abstract class GiftGUI {
         StringBuilder out = new StringBuilder();
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == '&' && i + 1 < text.length()) {
+            if ((c == '§' || c == '&') && i + 1 < text.length()) {
                 out.append(c).append(text.charAt(++i));
                 continue;
             }

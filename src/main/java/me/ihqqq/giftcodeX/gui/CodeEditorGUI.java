@@ -28,6 +28,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,15 +39,14 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
 
     private static Key key(String path) { return Key.key(NS, path); }
 
-    private static final Key KEY_EXPIRY_CONFIRM    = key("editor/expiry/confirm");
-    private static final Key KEY_EXPIRY_CANCEL     = key("editor/expiry/cancel");
-    private static final Key KEY_PERM_CONFIRM      = key("editor/permission/confirm");
-    private static final Key KEY_PERM_CANCEL       = key("editor/permission/cancel");
-    private static final Key KEY_CMDS_CONFIRM      = key("editor/commands/confirm");
-    private static final Key KEY_CMDS_CANCEL       = key("editor/commands/cancel");
-    private static final Key KEY_MSGS_CONFIRM      = key("editor/messages/confirm");
-    private static final Key KEY_MSGS_CANCEL       = key("editor/messages/cancel");
-
+    private static final Key KEY_EXPIRY_CONFIRM = key("editor/expiry/confirm");
+    private static final Key KEY_EXPIRY_CANCEL  = key("editor/expiry/cancel");
+    private static final Key KEY_PERM_CONFIRM   = key("editor/permission/confirm");
+    private static final Key KEY_PERM_CANCEL    = key("editor/permission/cancel");
+    private static final Key KEY_CMDS_CONFIRM   = key("editor/commands/confirm");
+    private static final Key KEY_CMDS_CANCEL    = key("editor/commands/cancel");
+    private static final Key KEY_MSGS_CONFIRM   = key("editor/messages/confirm");
+    private static final Key KEY_MSGS_CANCEL    = key("editor/messages/cancel");
 
     private static final int SLOT_INFO       = 4;
     private static final int SLOT_MAX_USES   = 20;
@@ -71,6 +71,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     }
 
 
+
     @Override
     protected Inventory buildInventory() {
         Inventory inv = Bukkit.createInventory(null, 54, title("code editor • " + gc.getCode()));
@@ -78,45 +79,133 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         for (int i = 0; i < 54; i++) inv.setItem(i, softPanel());
 
         inv.setItem(SLOT_INFO,       buildInfoItem());
-        inv.setItem(SLOT_MAX_USES,   buildNumericItem(Material.GOLD_INGOT,  "max uses",         gc.getMaxUses(),                   "left -1 • right +1 • shift ±10"));
-        inv.setItem(SLOT_PLAYER_USE, buildNumericItem(Material.PLAYER_HEAD, "player limit",     gc.getPlayerMaxUses(),             "left -1 • right +1 • -1 unlimited"));
-        inv.setItem(SLOT_IP_USE,     buildNumericItem(Material.COMPASS,     "ip limit",         gc.getMaxUsesPerIp(),              "left -1 • right +1 • 0 disabled"));
-        inv.setItem(SLOT_PLAYTIME,   buildNumericItem(Material.CLOCK,       "required playtime",gc.getRequiredPlaytimeMinutes(),   "left -1 • right +1 • shift ±10 min"));
+        inv.setItem(SLOT_MAX_USES,   buildNumericItem(Material.GOLD_INGOT,   "max uses",          gc.getMaxUses(),                  C_WARN,    "left -1 • right +1 • shift ±10"));
+        inv.setItem(SLOT_PLAYER_USE, buildNumericItem(Material.PLAYER_HEAD,  "player limit",      gc.getPlayerMaxUses(),            C_SPECIAL, "left -1 • right +1 • -1 = unlimited"));
+        inv.setItem(SLOT_IP_USE,     buildNumericItem(Material.COMPASS,      "ip limit",          gc.getMaxUsesPerIp(),             C_SPECIAL, "left -1 • right +1 • 0 = disabled"));
+        inv.setItem(SLOT_PLAYTIME,   buildNumericItem(Material.CLOCK,        "required playtime", gc.getRequiredPlaytimeMinutes(),  C_WARN,    "left -1 • right +1 • shift ±10 min"));
 
         boolean on = gc.isEnabled();
         inv.setItem(SLOT_TOGGLE, new ItemBuilder(on ? Material.LIME_DYE : Material.GRAY_DYE)
-                .name("&f" + sc(on ? "status • enabled" : "status • disabled"))
-                .lore(styleLore("click to toggle"))
+                .name((on ? C_GOOD : C_BAD) + sc("status • " + (on ? "enabled" : "disabled")))
+                .lore(buildToggleLore(on))
                 .glow(on)
                 .build());
 
-        inv.setItem(SLOT_EXPIRY, action(Material.CLOCK, "set expiry",
-                "current • " + (gc.getExpiry().isBlank() ? "never" : gc.getExpiry()),
-                "click to edit", "format • 2099-12-31T23:59:59"));
+        boolean hasExpiry = !gc.getExpiry().isBlank();
+        inv.setItem(SLOT_EXPIRY, buildActionItem(Material.CLOCK, "set expiry",
+                loreLine("current", hasExpiry ? gc.getExpiry() : "never",
+                        gc.isExpired() ? C_BAD : hasExpiry ? C_WARN : C_GOOD),
+                loreAction("click to edit"),
+                C_HINT + sc("format • 2099-12-31T23:59:59")));
 
-        inv.setItem(SLOT_PERMISSION, action(Material.PAPER, "set permission",
-                "current • " + (gc.hasPermissionRestriction() ? gc.getPermission() : "none"),
-                "click to edit", "leave blank to clear"));
+        boolean hasPerm = gc.hasPermissionRestriction();
+        inv.setItem(SLOT_PERMISSION, buildActionItem(Material.PAPER, "set permission",
+                loreLine("current", hasPerm ? gc.getPermission() : "none",
+                        hasPerm ? C_SPECIAL : C_HINT),
+                loreAction("click to edit"),
+                C_HINT + sc("leave blank to clear")));
 
-        inv.setItem(SLOT_COMMANDS, new ItemBuilder(Material.COMMAND_BLOCK)
-                .name("&f" + sc("commands • " + gc.getCommands().size()))
-                .lore(buildPreviewLore(gc.getCommands(), 5))
-                .appendLore("", "&8" + sc("click to edit • separate with |"))
-                .build());
+        inv.setItem(SLOT_COMMANDS, buildListItem(Material.COMMAND_BLOCK,
+                "commands • " + gc.getCommands().size(),
+                gc.getCommands(), C_WARN));
 
-        inv.setItem(SLOT_MESSAGES, new ItemBuilder(Material.BOOK)
-                .name("&f" + sc("messages • " + gc.getMessages().size()))
-                .lore(buildPreviewLore(gc.getMessages(), 5))
-                .appendLore("", "&8" + sc("click to edit • separate with |"))
-                .build());
+        inv.setItem(SLOT_MESSAGES, buildListItem(Material.BOOK,
+                "messages • " + gc.getMessages().size(),
+                gc.getMessages(), C_VALUE));
 
-        inv.setItem(SLOT_ITEMS, action(Material.CHEST, "item rewards • " + gc.getItemRewards().size(),
-                "click to open item editor"));
-        inv.setItem(SLOT_BACK, action(Material.ARROW,   "back to list",      "return without saving"));
-        inv.setItem(SLOT_SAVE, actionGlow(Material.EMERALD, "save and close", "save all changes"));
+        inv.setItem(SLOT_ITEMS, buildActionItem(Material.CHEST, "item rewards • " + gc.getItemRewards().size(),
+                loreLine("saved", String.valueOf(gc.getItemRewards().size()), C_SPECIAL),
+                loreAction("click to open item editor")));
+
+        inv.setItem(SLOT_BACK, buildActionItem(Material.ARROW,   "back to list",   loreAction("return without saving")));
+        inv.setItem(SLOT_SAVE, buildSaveItem());
 
         return inv;
     }
+
+
+
+    private ItemStack buildInfoItem() {
+        int used = plugin.getCodeManager().globalUseCount(gc.getCode());
+        boolean expired = gc.isExpired();
+        boolean enabled = gc.isEnabled();
+
+        List<String> lore = new ArrayList<>();
+        lore.add(loreLine("status",  enabled ? (expired ? "expired" : "enabled") : "disabled",
+                enabled ? (expired ? C_BAD : C_GOOD) : C_WARN));
+        lore.add(loreLine("uses remaining", String.valueOf(gc.getMaxUses()), C_WARN));
+        lore.add(loreLine("total redeemed", String.valueOf(used), C_VALUE));
+        lore.add(loreLine("expired",  expired ? "yes" : "no", expired ? C_BAD : C_GOOD));
+
+        return new ItemBuilder(Material.KNOWLEDGE_BOOK)
+                .name(C_VALUE + gc.getCode())
+                .lore(lore)
+                .build();
+    }
+
+    private ItemStack buildNumericItem(Material mat, String name, int current,
+                                       String valueColor, String hint) {
+        List<String> lore = new ArrayList<>();
+        lore.add(loreLine("value", String.valueOf(current), valueColor));
+        lore.add("");
+        lore.add(C_HINT + sc(hint));
+
+        return new ItemBuilder(mat)
+                .name(C_VALUE + sc(name))
+                .lore(lore)
+                .build();
+    }
+
+    private List<String> buildToggleLore(boolean on) {
+        List<String> lore = new ArrayList<>();
+        lore.add(loreLine("current", on ? "enabled" : "disabled", on ? C_GOOD : C_BAD));
+        lore.add("");
+        lore.add(loreAction("click to toggle"));
+        return lore;
+    }
+
+    private ItemStack buildActionItem(Material mat, String name, String... loreDirect) {
+        List<String> lore = new ArrayList<>(List.of(loreDirect));
+        return new ItemBuilder(mat)
+                .name(C_VALUE + sc(name))
+                .lore(lore)
+                .build();
+    }
+
+    private ItemStack buildListItem(Material mat, String name, List<String> entries, String entryColor) {
+        List<String> lore = new ArrayList<>();
+        int max = 5;
+        int shown = Math.min(entries.size(), max);
+        for (int i = 0; i < shown; i++) {
+            lore.add(C_HINT + sc("• ") + entryColor + entries.get(i));
+        }
+        if (entries.size() > max) {
+            lore.add(C_HINT + sc("• +" + (entries.size() - max) + " more..."));
+        }
+        if (entries.isEmpty()) {
+            lore.add(C_HINT + sc("• (none)"));
+        }
+        lore.add("");
+        lore.add(loreAction("click to edit • separate with |"));
+
+        return new ItemBuilder(mat)
+                .name(C_VALUE + sc(name))
+                .lore(lore)
+                .build();
+    }
+
+    private ItemStack buildSaveItem() {
+        List<String> lore = new ArrayList<>();
+        lore.add(C_GOOD + sc("✔ saves all pending changes"));
+        lore.add("");
+        lore.add(loreAction("click to save & close"));
+        return new ItemBuilder(Material.EMERALD)
+                .name(C_GOOD + sc("save and close"))
+                .lore(lore)
+                .glow()
+                .build();
+    }
+
 
 
     @Override
@@ -129,10 +218,10 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
 
         switch (event.getSlot()) {
             case SLOT_MAX_USES   -> adjust(right, shift, 10, gc.getMaxUses(),                0,  Integer.MAX_VALUE, v -> gc = gc.withMaxUses(v));
-            case SLOT_PLAYER_USE -> adjust(right, shift, 5,  gc.getPlayerMaxUses(),         -1, Integer.MAX_VALUE, v -> gc = gc.toBuilder().playerMaxUses(v).build());
-            case SLOT_IP_USE     -> adjust(right, shift, 5,  gc.getMaxUsesPerIp(),           0, Integer.MAX_VALUE, v -> gc = gc.toBuilder().maxUsesPerIp(v).build());
-            case SLOT_PLAYTIME   -> adjust(right, shift, 10, gc.getRequiredPlaytimeMinutes(),0, Integer.MAX_VALUE, v -> gc = gc.toBuilder().requiredPlaytimeMinutes(v).build());
-            case SLOT_TOGGLE     -> {
+            case SLOT_PLAYER_USE -> adjust(right, shift, 5,  gc.getPlayerMaxUses(),         -1,  Integer.MAX_VALUE, v -> gc = gc.toBuilder().playerMaxUses(v).build());
+            case SLOT_IP_USE     -> adjust(right, shift, 5,  gc.getMaxUsesPerIp(),           0,  Integer.MAX_VALUE, v -> gc = gc.toBuilder().maxUsesPerIp(v).build());
+            case SLOT_PLAYTIME   -> adjust(right, shift, 10, gc.getRequiredPlaytimeMinutes(),0,  Integer.MAX_VALUE, v -> gc = gc.toBuilder().requiredPlaytimeMinutes(v).build());
+            case SLOT_TOGGLE -> {
                 gc = gc.withEnabled(!gc.isEnabled());
                 viewer.playSound(viewer.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, gc.isEnabled() ? 1.2f : 0.8f);
             }
@@ -153,7 +242,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
             case SLOT_SAVE -> {
                 plugin.getCodeManager().update(gc);
                 viewer.playSound(viewer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
-                viewer.sendMessage(("&aChanges saved for code &e" + gc.getCode() + "&a.").replace("&", "§"));
+                viewer.sendMessage((C_GOOD + "Changes saved for code " + C_WARN + gc.getCode() + C_GOOD + "."));
                 close();
                 return;
             }
@@ -164,10 +253,11 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
 
     private void adjust(boolean right, boolean shift, int shiftStep, int current, int min, int max,
                         java.util.function.IntConsumer setter) {
-        int delta = shift ? shiftStep : 1;
+        int delta  = shift ? shiftStep : 1;
         int newVal = Math.max(min, Math.min(max, current + (right ? delta : -delta)));
         setter.accept(newVal);
     }
+
 
 
     private void openExpiryDialog() {
@@ -255,8 +345,8 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         Player player = gameConnection.getPlayer();
         if (!player.getUniqueId().equals(viewer.getUniqueId())) return;
 
-        Key id   = event.getIdentifier();
-        var view = event.getDialogResponseView();
+        Key  id   = event.getIdentifier();
+        var  view = event.getDialogResponseView();
 
         if (id.equals(KEY_EXPIRY_CONFIRM) && view != null) {
             String raw = view.getText("expiry");
@@ -294,32 +384,5 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     private void refresh() {
         Inventory fresh = buildInventory();
         for (int i = 0; i < 54; i++) inventory.setItem(i, fresh.getItem(i));
-    }
-
-    private ItemStack buildInfoItem() {
-        int used = plugin.getCodeManager().globalUseCount(gc.getCode());
-        return new ItemBuilder(Material.KNOWLEDGE_BOOK)
-                .name("&f" + gc.getCode())
-                .lore(styleLore(
-                        "uses remaining • " + gc.getMaxUses(),
-                        "total redeemed • " + used,
-                        "status • " + (gc.isEnabled() ? "enabled" : "disabled"),
-                        "expired • " + (gc.isExpired() ? "yes" : "no")
-                )).build();
-    }
-
-    private ItemStack buildNumericItem(Material mat, String name, int current, String hint) {
-        return new ItemBuilder(mat)
-                .name("&f" + sc(name))
-                .lore(styleLore("value • " + current, "", hint))
-                .build();
-    }
-
-    private List<String> buildPreviewLore(List<String> lines, int max) {
-        List<String> lore = new java.util.ArrayList<>();
-        int shown = Math.min(lines.size(), max);
-        for (int i = 0; i < shown; i++) lore.add("&8" + sc("• " + lines.get(i)));
-        if (lines.size() > max) lore.add("&8" + sc("• +" + (lines.size() - max) + " more"));
-        return lore;
     }
 }

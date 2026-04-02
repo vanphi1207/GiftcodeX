@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public final class UpdateChecker implements Listener {
 
     private static final String API_URL = "https://api.github.com/repos/vanphi1207/GiftCodeX/releases/latest";
-    private static final long   CHECK_INTERVAL = 10 * 60 * 1_000L; // 10 minutes in ms
+    private static final long   CHECK_INTERVAL = 10 * 60 * 1_000L;
 
     private final GiftcodeX plugin;
     private volatile String latestVersion;
@@ -58,7 +58,7 @@ public final class UpdateChecker implements Listener {
             conn.setReadTimeout(5_000);
 
             int responseCode = conn.getResponseCode();
-            if (responseCode == 304) return; // not modified
+            if (responseCode == 304) return;
             if (responseCode != 200) {
                 plugin.getLogger().warning("Update check failed: HTTP " + responseCode);
                 return;
