@@ -32,6 +32,15 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
     }
 
 
+    private String inf() {
+        return plugin.getMessageConfig().getInfinitySymbol();
+    }
+
+    private String displayMaxUses(int maxUses) {
+        return maxUses >= Integer.MAX_VALUE ? inf() : String.valueOf(maxUses);
+    }
+
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String sub = args.length == 0 ? "help" : args[0].toLowerCase(Locale.ROOT);
@@ -122,7 +131,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
                 int used   = plugin.getCodeManager().globalUseCount(code);
                 String status = gc.isEnabled() ? ChatColor.GREEN + "ON" : ChatColor.RED + "OFF";
                 sender.sendMessage(ChatColor.YELLOW + code
-                        + ChatColor.GRAY + " | uses: " + ChatColor.AQUA + gc.getMaxUses()
+                        + ChatColor.GRAY + " | uses: " + ChatColor.AQUA + displayMaxUses(gc.getMaxUses())
                         + ChatColor.GRAY + " | used: " + ChatColor.AQUA + used
                         + ChatColor.GRAY + " | status: " + status);
             });
@@ -187,11 +196,11 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.GOLD + "── Code: " + ChatColor.YELLOW + code + ChatColor.GOLD + " ──");
             sender.sendMessage(info("Enabled",            gc.isEnabled()              ? "&aYes" : "&cNo"));
             sender.sendMessage(info("Expired",            gc.isExpired()              ? "&cYes" : "&aNo"));
-            sender.sendMessage(info("Max Uses (global)",  String.valueOf(gc.getMaxUses())));
+            sender.sendMessage(info("Max Uses (global)",  displayMaxUses(gc.getMaxUses())));
             sender.sendMessage(info("Used (global)",      String.valueOf(used)));
-            sender.sendMessage(info("Per-player limit",   gc.isUnlimitedPlayerUses()  ? "Unlimited" : String.valueOf(gc.getPlayerMaxUses())));
+            sender.sendMessage(info("Per-player limit",   gc.isUnlimitedPlayerUses()  ? inf() : String.valueOf(gc.getPlayerMaxUses())));
             sender.sendMessage(info("Per-IP limit",       gc.hasIpRestriction()       ? String.valueOf(gc.getMaxUsesPerIp()) : "Disabled"));
-            sender.sendMessage(info("Expiry",             gc.getExpiry().isBlank()    ? "Never" : gc.getExpiry()));
+            sender.sendMessage(info("Expiry",             gc.getExpiry().isBlank()    ? inf() : gc.getExpiry()));
             sender.sendMessage(info("Permission",         gc.hasPermissionRestriction() ? gc.getPermission() : "None"));
             sender.sendMessage(info("Playtime req.",      gc.hasPlaytimeRequirement() ? gc.getRequiredPlaytimeMinutes() + " min" : "None"));
             sender.sendMessage(info("Commands",           String.valueOf(gc.getCommands().size())));

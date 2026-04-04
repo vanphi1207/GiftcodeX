@@ -68,6 +68,7 @@ public final class CodeListGUI extends GiftGUI {
 
 
     private ItemStack buildCodeItem(String key, Giftcode gc) {
+        String inf = plugin.getMessageConfig().getInfinitySymbol();
         int used = plugin.getCodeManager().globalUseCount(key);
 
         boolean expired  = gc.isExpired();
@@ -90,14 +91,14 @@ public final class CodeListGUI extends GiftGUI {
 
         lore.add(loreLine("uses", used + " / " + total, usesColor));
         lore.add(loreLine("player limit",
-                gc.isUnlimitedPlayerUses() ? "unlimited" : String.valueOf(gc.getPlayerMaxUses()),
+                gc.isUnlimitedPlayerUses() ? inf : String.valueOf(gc.getPlayerMaxUses()),
                 C_SPECIAL));
         lore.add(loreLine("ip limit",
                 gc.hasIpRestriction() ? String.valueOf(gc.getMaxUsesPerIp()) : "disabled",
                 gc.hasIpRestriction() ? C_WARN : C_HINT));
 
         lore.add(loreLine("expiry",
-                gc.getExpiry().isBlank() ? "never" : gc.getExpiry(),
+                gc.getExpiry().isBlank() ? inf : gc.getExpiry(),
                 expired ? C_BAD : gc.getExpiry().isBlank() ? C_GOOD : C_WARN));
 
         lore.add(loreLine("permission",
@@ -109,7 +110,6 @@ public final class CodeListGUI extends GiftGUI {
 
         lore.add(loreLine("commands", String.valueOf(gc.getCommands().size()), C_VALUE));
         lore.add(loreLine("items",    String.valueOf(gc.getItemRewards().size()), C_VALUE));
-
 
         lore.add("");
         lore.add(loreAction("left click • edit settings"));

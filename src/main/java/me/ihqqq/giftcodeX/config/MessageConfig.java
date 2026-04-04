@@ -12,6 +12,7 @@ public final class MessageConfig {
 
     private static final Map<String, String> DEFAULTS = Map.ofEntries(
             Map.entry("prefix",              "&8[&bGiftCodeX&8] "),
+            Map.entry("infinity-symbol",     "∞"),
             Map.entry("redeemed",            "&aCode redeemed successfully!"),
             Map.entry("invalid-code",        "&cThis code does not exist."),
             Map.entry("code-disabled",       "&cThis code is currently disabled."),
@@ -49,6 +50,12 @@ public final class MessageConfig {
     public void reload() {
         cfg = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "messages.yml"));
     }
+
+
+    public String getInfinitySymbol() {
+        return cfg.getString("infinity-symbol", DEFAULTS.get("infinity-symbol"));
+    }
+
 
     public String get(String key) {
         return get(key, Map.of());

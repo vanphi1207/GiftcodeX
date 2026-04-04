@@ -39,7 +39,7 @@ VIP_ONLY:
   messages:
     - "&6[VIP] &eYou received a Netherite Ingot for being a VIP!"
   max-uses: 50
-  expiry: ""
+  expiry: "2099-12-31T23:59:59"
   enabled: true
   player-max-uses: 1
   max-uses-per-ip: 1

@@ -4,6 +4,10 @@
 
 prefix: "&8[&bGiftcodeX&8] "
 
+# Symbol displayed when a value is unlimited (player-max-uses: -1) or has no expiry
+# You can change this to any character, "∞", "Unlimited", "Forever", "N/A"
+infinity-symbol: "∞"
+
 
 redeemed:            "&aCode redeemed successfully!"
 invalid-code:        "&cThis gift code does not exist."

@@ -48,6 +48,8 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
     @Override
     public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
 
+        String inf = plugin.getMessageConfig().getInfinitySymbol();
+
         if (params.equals("total_codes")) {
             return String.valueOf(codeManager.getAll().size());
         }
@@ -57,7 +59,6 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
             return String.valueOf(playerDataManager.getOrCreate(player.getUniqueId()).getUsedCodes().size());
         }
 
-        // Format: code_<subaction>_<codename>
         if (!params.startsWith("code_")) return null;
 
         String rest = params.substring(5);
@@ -74,13 +75,15 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
             case "expired"    -> opt.map(gc -> String.valueOf(gc.isExpired())).orElse("true");
             case "maxuses"    -> opt.map(gc -> String.valueOf(gc.getMaxUses())).orElse("0");
             case "used"       -> String.valueOf(codeManager.globalUseCount(codeName));
-            case "expiry"     -> opt.map(gc -> gc.getExpiry().isBlank() ? "Never" : gc.getExpiry()).orElse("N/A");
+            case "expiry"     -> opt.map(gc -> gc.getExpiry().isBlank() ? inf : gc.getExpiry()).orElse("N/A");
             case "permission" -> opt.map(gc -> gc.hasPermissionRestriction() ? gc.getPermission() : "None").orElse("N/A");
             case "playtime"   -> opt.map(gc -> String.valueOf(gc.getRequiredPlaytimeMinutes())).orElse("0");
+
             case "playeruses" -> {
                 if (player == null || opt.isEmpty()) yield "0";
                 yield String.valueOf(playerDataManager.getOrCreate(player.getUniqueId()).useCount(codeName));
             }
+
             case "canuseip" -> {
                 if (player == null || opt.isEmpty()) yield "false";
                 Giftcode gc = opt.get();
@@ -88,6 +91,11 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
                 String ip = playerDataManager.getOrCreate(player.getUniqueId()).getLastKnownIp();
                 yield String.valueOf(playerDataManager.ipUseCount(ip, codeName) < gc.getMaxUsesPerIp());
             }
+
+            case "playerlimit" -> opt.map(gc -> gc.isUnlimitedPlayerUses() ? inf : String.valueOf(gc.getPlayerMaxUses())).orElse("0");
+
+            case "iplimit"    -> opt.map(gc -> gc.hasIpRestriction() ? String.valueOf(gc.getMaxUsesPerIp()) : inf).orElse("0");
+
             default -> null;
         };
     }

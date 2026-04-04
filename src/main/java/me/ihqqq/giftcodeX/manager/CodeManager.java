@@ -15,15 +15,16 @@ import java.security.SecureRandom;
 import java.util.*;
 
 public final class CodeManager {
-    private static final String RANDOM_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
-    private static final int RANDOM_SUFFIX_LEN = 8;
+    private static final String RANDOM_CHARS    = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+    private static final int    RANDOM_SUFFIX_LEN = 8;
+
+    public static final int UNLIMITED_USES = Integer.MAX_VALUE;
 
     private final GiftcodeX plugin;
     private final CodeRepository repository;
     private final PlayerDataManager playerDataManager;
 
     private final Map<String, Giftcode> codes;
-
     private final SecureRandom rng = new SecureRandom();
 
     public CodeManager(GiftcodeX plugin, CodeRepository repository, PlayerDataManager playerDataManager) {
@@ -83,6 +84,7 @@ public final class CodeManager {
         return playerDataManager.globalUseCount(code);
     }
 
+
     public int generateRandom(String prefix, int amount) {
         return generateRandomFromTemplate(prefix, amount, null);
     }
@@ -94,7 +96,7 @@ public final class CodeManager {
         int created = 0;
         for (int i = 0; i < amount && created < amount; i++) {
             String code = generateUniqueCode(prefix);
-            if (code == null) continue; // exhausted retries
+            if (code == null) continue;
 
             Giftcode.Builder builder = template != null
                     ? template.toBuilder()
@@ -141,7 +143,9 @@ public final class CodeManager {
         if (gc == null) return RedeemResult.INVALID_CODE;
         if (!gc.isEnabled()) return RedeemResult.CODE_DISABLED;
         if (gc.isExpired()) return RedeemResult.CODE_EXPIRED;
-        if (gc.getMaxUses() <= 0) return RedeemResult.MAX_USES_REACHED;
+
+        boolean unlimitedGlobal = gc.getMaxUses() >= UNLIMITED_USES;
+        if (!unlimitedGlobal && gc.getMaxUses() <= 0) return RedeemResult.MAX_USES_REACHED;
 
         if (gc.hasPermissionRestriction() && !player.hasPermission(gc.getPermission())) {
             return RedeemResult.NO_PERMISSION;
@@ -168,13 +172,16 @@ public final class CodeManager {
 
         executeRewards(player, gc);
 
-        Giftcode updated = gc.withMaxUses(gc.getMaxUses() - 1);
-        codes.put(rawCode, updated);
+        if (!unlimitedGlobal) {
+            Giftcode updated = gc.withMaxUses(gc.getMaxUses() - 1);
+            codes.put(rawCode, updated);
+        }
         playerDataManager.recordRedemption(player, rawCode);
         saveAll();
 
         return RedeemResult.SUCCESS;
     }
+
 
 
     public void assign(Player player, String code) {
@@ -200,8 +207,8 @@ public final class CodeManager {
 
         if (!gc.getItemRewards().isEmpty() || !gc.getMessages().isEmpty()) {
             List<ItemStack> items = gc.getItemRewards();
-            List<String> msgs = gc.getMessages();
-            String color = plugin.getConfigManager().getRewardColor();
+            List<String> msgs    = gc.getMessages();
+            String color         = plugin.getConfigManager().getRewardColor();
 
             FoliaUtils.runForPlayer(plugin, player, () -> {
                 for (ItemStack item : items) {
@@ -216,6 +223,7 @@ public final class CodeManager {
             });
         }
     }
+
 
     private String colorize(String text) {
         return text.replace("&", "§");
