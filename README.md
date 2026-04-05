@@ -1,4 +1,8 @@
-﻿# GiftcodeX
+<img width="2048" height="441" alt="minecraft_title" src="https://github.com/user-attachments/assets/3f223d13-89c5-40ad-8b3a-373508cf0a1b" />
+
+
+ 
+# GiftcodeX
 
 > Advanced gift code management plugin for Minecraft servers — GUI editor, PlaceholderAPI support, MySQL/H2 database, Folia compatible.
 
