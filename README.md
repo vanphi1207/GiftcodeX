@@ -5,7 +5,6 @@
 <img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/2371861d-6144-4954-9915-5283708a37e9" />
 <img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/555bdb81-29e7-4b5c-a94b-59ddf95e665f" />
 
-
 ---
 
 ## Table of Contents
@@ -15,9 +14,9 @@
 - [Commands](#commands)
 - [Permissions](#permissions)
 - [Configuration](#configuration)
-    - [config.yml](#configyml)
-    - [messages.yml](#messagesyml)
-    - [codes.yml](#codesyml)
+  - [config.yml](#configyml)
+  - [messages.yml](#messagesyml)
+  - [codes.yml](#codesyml)
 - [PlaceholderAPI](#placeholderapi)
 - [Author](#author)
 - [Support](#support)
@@ -52,21 +51,21 @@ All admin commands require the `giftcodex.admin` permission. Players use `/redee
 
 ### Admin — `/giftcodex` (aliases: `/gcx`, `/gc`)
 
-| Command | Description |
-|---|---|
-| `/gcx help` | Show command help |
-| `/gcx create <code> [-g]` | Create a gift code. Add `-g` to open the GUI editor immediately |
-| `/gcx delete <code>` | Permanently delete a code and purge all player records |
-| `/gcx enable <code>` | Enable a disabled code |
-| `/gcx disable <code>` | Disable a code without deleting it |
-| `/gcx list` | List all codes (opens GUI for players, text list for console) |
-| `/gcx edit <code>` | Open the GUI settings editor for a code |
-| `/gcx items <code>` | Open the GUI item reward editor for a code |
-| `/gcx assign <code> <player>` | Give a code's rewards directly to a player |
-| `/gcx setperm <code> <perm\|none>` | Set or clear the required permission for a code |
-| `/gcx info <code>` | Print detailed information about a code |
+| Command                                         | Description |
+|-------------------------------------------------|---|
+| `/gcx help`                                     | Show command help |
+| `/gcx create <code> [-g]`                       | Create a gift code. Add `-g` to open the GUI editor immediately |
+| `/gcx delete <code>`                            | Permanently delete a code and purge all player records |
+| `/gcx enable <code>`                            | Enable a disabled code |
+| `/gcx disable <code>`                           | Disable a code without deleting it |
+| `/gcx gui`                                      | List all codes (opens GUI for players, text list for console) |
+| `/gcx edit <code>`                              | Open the GUI settings editor for a code |
+| `/gcx items <code>`                             | Open the GUI item reward editor for a code |
+| `/gcx assign <code> <player>`                   | Give a code's rewards directly to a player |
+| `/gcx setperm <code> <perm\|none>`              | Set or clear the required permission for a code |
+| `/gcx info <code>`                              | Print detailed information about a code |
 | `/gcx random <prefix> [amount] [-c <template>]` | Bulk-generate random codes. Use `-c <template>` to copy settings from an existing code |
-| `/gcx reload` | Reload `config.yml`, `messages.yml`, and `codes.yml` without restarting |
+| `/gcx reload`                                   | Reload `config.yml`, `messages.yml`, and `codes.yml` without restarting |
 
 ### Player
 
@@ -119,9 +118,13 @@ defaults:
 
 ### messages.yml
 
-All messages support `&` colour codes.
+All messages support `&` colour codes. The `infinity-symbol` field controls what is displayed for unlimited/no-expiry values (default: `∞`).
+
 ```yaml
 prefix: "&8[&bGiftcodeX&8] "
+
+# Symbol displayed for unlimited or no-expiry values
+infinity-symbol: "∞"
 
 redeemed:            "&aCode redeemed successfully!"
 invalid-code:        "&cThis gift code does not exist."
@@ -130,7 +133,7 @@ code-expired:        "&cThis gift code has expired."
 max-uses-reached:    "&cThis gift code has reached its global usage limit."
 already-redeemed:    "&cYou have already used this code the maximum allowed number of times."
 ip-limit-reached:    "&cThis gift code has been used too many times from your IP address."
-not-enough-playtime: "&cYou need at least &e{required} &cminutes of playtime. &7(You have: &e{current} &7min)"
+not-enough-playtime: "&cYou need at least &e{required} &cminutes of playtime to use this code. &7(You have: &e{current} &7min)"
 no-permission:       "&cYou do not have permission to use this gift code."
 ```
 
@@ -138,7 +141,7 @@ no-permission:       "&cYou do not have permission to use this gift code."
 
 ### codes.yml
 
-Codes are stored and managed automatically. You can also edit this file manually.
+Codes are stored and managed automatically. You can also edit this file manually, then run `/gcx reload`.
 
 ```yaml
 SUMMER24:
@@ -147,15 +150,32 @@ SUMMER24:
     - "give %player% golden_apple 1"
   messages:
     - "&aYou received &e3 Diamonds &aand a &eGolden Apple&a!"
-  max-uses: 1000               # Remaining global uses
+  max-uses: 1000               # Remaining global uses (set to 999999999 for unlimited)
   expiry: "2024-08-31T23:59:59"
   enabled: true
-  player-max-uses: 1
-  max-uses-per-ip: 2
-  required-playtime: 0        # 0 = no requirement
-  permission: ""              # Leave blank for no permission required
-  items: []                   # Set item rewards via /gcx items <code>
+  player-max-uses: 1           # -1 = unlimited per player
+  max-uses-per-ip: 2           # 0 = disabled
+  required-playtime: 0         # 0 = no requirement (minutes)
+  permission: ""               # Leave blank for no permission required
+  items: []                    # Set item rewards via /gcx items <code>
 ```
+
+**Field reference:**
+
+| Field | Description |
+|---|---|
+| `commands` | Console commands run on redemption. Use `%player%` as the player name placeholder |
+| `messages` | Messages sent to the player. Supports `&` colour codes |
+| `max-uses` | Remaining global uses. Set to `999999999` for effectively unlimited |
+| `expiry` | ISO-8601 expiry datetime (`yyyy-MM-dd'T'HH:mm:ss`). Leave empty for no expiry |
+| `enabled` | `true` / `false` |
+| `player-max-uses` | Per-player redemption limit. `-1` = unlimited |
+| `max-uses-per-ip` | Per-IP redemption limit. `0` = disabled |
+| `required-playtime` | Minimum playtime in minutes before a player can redeem. `0` = no requirement |
+| `permission` | Required permission node. Leave empty for none |
+| `items` | ItemStack-serialized item rewards — managed via `/gcx items <code>` |
+
+---
 
 ## PlaceholderAPI
 
@@ -170,11 +190,13 @@ Install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/
 | `%giftcodex_code_expired_<code>%` | `true` / `false` — whether the code has expired |
 | `%giftcodex_code_maxuses_<code>%` | Remaining global uses |
 | `%giftcodex_code_used_<code>%` | Total times the code has been redeemed (all players) |
-| `%giftcodex_code_expiry_<code>%` | Expiry date string, or `Never` |
+| `%giftcodex_code_expiry_<code>%` | Expiry date string, or the configured infinity symbol |
 | `%giftcodex_code_permission_<code>%` | Required permission, or `None` |
 | `%giftcodex_code_playtime_<code>%` | Required playtime in minutes |
 | `%giftcodex_code_playeruses_<code>%` | Times *this player* has redeemed the code |
 | `%giftcodex_code_canuseip_<code>%` | `true` / `false` — whether the player's IP is still under the limit |
+| `%giftcodex_code_playerlimit_<code>%` | Per-player use limit, or the infinity symbol if unlimited |
+| `%giftcodex_code_iplimit_<code>%` | Per-IP use limit, or the infinity symbol if disabled |
 
 ---
 
@@ -191,5 +213,3 @@ Install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/
 
 - **Issues & bug reports:** [GitHub Issues](https://github.com/vanphi1207/GiftCodeX/issues)
 - **Discord server:** [discord.gg/YQtCC7BV](https://discord.gg/YQtCC7BV)
-
-

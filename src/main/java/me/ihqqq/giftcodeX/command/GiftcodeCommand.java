@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMMANDS = List.of(
-            "help", "create", "delete", "enable", "disable", "list",
+            "help", "create", "delete", "enable", "disable", "gui",
             "edit", "items", "assign", "setperm", "info", "random", "reload"
     );
 
@@ -57,7 +57,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
             case "delete", "del"    -> handleDelete(sender, args);
             case "enable"           -> handleSetEnabled(sender, args, true);
             case "disable"          -> handleSetEnabled(sender, args, false);
-            case "list"             -> handleList(sender);
+            case "gui", "list"      -> handleGui(sender);   // "list" kept as hidden alias
             case "edit"             -> handleEdit(sender, args);
             case "items"            -> handleItems(sender, args);
             case "assign"           -> handleAssign(sender, args);
@@ -119,7 +119,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
         );
     }
 
-    private void handleList(CommandSender sender) {
+    private void handleGui(CommandSender sender) {
         if (sender instanceof Player player) {
             new CodeListGUI(plugin, player).open(0);
             return;
@@ -244,7 +244,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
         helpLine(sender, "/gcx create <code> [-g]",                     "Create a code (optionally open editor)");
         helpLine(sender, "/gcx delete <code>",                          "Delete a code");
         helpLine(sender, "/gcx enable|disable <code>",                  "Toggle a code on/off");
-        helpLine(sender, "/gcx list",                                    "List all codes (GUI for players)");
+        helpLine(sender, "/gcx gui",                                     "Open the code browser GUI");
         helpLine(sender, "/gcx edit <code>",                            "Open settings GUI editor");
         helpLine(sender, "/gcx items <code>",                           "Open item rewards editor");
         helpLine(sender, "/gcx assign <code> <player>",                 "Give a code to a player");
