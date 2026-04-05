@@ -2,10 +2,14 @@
 
 > Advanced gift code management plugin for Minecraft servers — GUI editor, PlaceholderAPI support, MySQL/H2 database, Folia compatible.
 
-<img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/2371861d-6144-4954-9915-5283708a37e9" />
-<img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/555bdb81-29e7-4b5c-a94b-59ddf95e665f" />
+<img width="1920" height="991" alt="2026-04-05_13 55 53" src="https://github.com/user-attachments/assets/43d946ad-18dd-4d73-9af3-f612d50225a8" />
+
+<img width="1920" height="991" alt="2026-04-05_13 57 01" src="https://github.com/user-attachments/assets/d3f22ba4-888a-4bcd-ba29-201cc4f45d45" />
+
 
 ---
+
+![Bstats](https://bstats.org/signatures/bukkit/GiftcodeX.svg)
 
 ## Table of Contents
 
