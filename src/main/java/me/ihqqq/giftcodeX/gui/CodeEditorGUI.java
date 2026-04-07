@@ -12,6 +12,8 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import me.ihqqq.giftcodeX.GiftcodeX;
 import me.ihqqq.giftcodeX.gui.base.GiftGUI;
 import me.ihqqq.giftcodeX.model.Giftcode;
+import me.ihqqq.giftcodeX.util.ChatInputRequest;
+import me.ihqqq.giftcodeX.util.ClientVersionUtils;
 import me.ihqqq.giftcodeX.util.FoliaUtils;
 import me.ihqqq.giftcodeX.util.ItemBuilder;
 import net.kyori.adventure.key.Key;
@@ -67,10 +69,14 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
 
     private Giftcode gc;
 
+    private final boolean dialogSupported;
+
     public CodeEditorGUI(GiftcodeX plugin, Player viewer, Giftcode gc) {
         super(plugin, viewer);
         this.gc = gc;
+        this.dialogSupported = ClientVersionUtils.supportsDialog(viewer);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
     }
 
 
@@ -81,6 +87,9 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     private boolean isUnlimitedUses() {
         return gc.getMaxUses() >= UNLIMITED_USES;
     }
+
+    private static String colorize(String s) { return s.replace("&", "§"); }
+
 
 
     @Override
@@ -93,7 +102,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         inv.setItem(SLOT_MAX_USES,   buildMaxUsesItem());
         inv.setItem(SLOT_PLAYER_USE, buildPlayerUseItem());
         inv.setItem(SLOT_IP_USE,     buildIpLimitItem());
-        inv.setItem(SLOT_PLAYTIME,   buildNumericItem(Material.CLOCK,   "required playtime",
+        inv.setItem(SLOT_PLAYTIME,   buildNumericItem(Material.CLOCK, "required playtime",
                 gc.getRequiredPlaytimeMinutes(), C_WARN, "left -1 • right +1 • shift ±10 min"));
 
         boolean on = gc.isEnabled();
@@ -110,7 +119,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 loreLine("current", hasPerm ? gc.getPermission() : "none",
                         hasPerm ? C_SPECIAL : C_HINT),
                 loreAction("click to edit"),
-                C_HINT + sc("leave blank to clear")));
+                inputModeHint()));
 
         inv.setItem(SLOT_COMMANDS, buildListItem(Material.COMMAND_BLOCK,
                 "commands • " + gc.getCommands().size(), gc.getCommands(), C_WARN));
@@ -131,9 +140,16 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     }
 
 
+    private String inputModeHint() {
+        return dialogSupported
+                ? C_HINT + sc("✦ dialog input")
+                : C_WARN + sc("✦ chat input");
+    }
+
+
 
     private ItemStack buildInfoItem() {
-        int used    = plugin.getCodeManager().globalUseCount(gc.getCode());
+        int used        = plugin.getCodeManager().globalUseCount(gc.getCode());
         boolean expired = gc.isExpired();
         boolean enabled = gc.isEnabled();
 
@@ -143,13 +159,14 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         lore.add(loreLine("uses remaining", isUnlimitedUses() ? inf() : String.valueOf(gc.getMaxUses()), C_WARN));
         lore.add(loreLine("total redeemed", String.valueOf(used), C_VALUE));
         lore.add(loreLine("expired", expired ? "yes" : "no", expired ? C_BAD : C_GOOD));
+        lore.add("");
+        lore.add(inputModeHint());
 
         return new ItemBuilder(Material.KNOWLEDGE_BOOK)
                 .name(C_VALUE + gc.getCode())
                 .lore(lore)
                 .build();
     }
-
 
     private ItemStack buildMaxUsesItem() {
         String displayVal = isUnlimitedUses() ? inf() : String.valueOf(gc.getMaxUses());
@@ -184,7 +201,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 .build();
     }
 
-
     private ItemStack buildExpiryItem() {
         boolean hasExpiry    = !gc.getExpiry().isBlank();
         String displayExpiry = hasExpiry ? gc.getExpiry() : inf();
@@ -196,6 +212,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         lore.add(loreAction("click to edit"));
         lore.add(C_HINT + sc("Q • set to " + inf() + " (no expiry)"));
         lore.add(C_HINT + sc("format • 2099-12-31T23:59:59"));
+        lore.add(inputModeHint());
 
         return new ItemBuilder(Material.CLOCK)
                 .name(C_VALUE + sc("set expiry"))
@@ -205,7 +222,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     }
 
     private ItemStack buildIpLimitItem() {
-        boolean disabled = !gc.hasIpRestriction();
+        boolean disabled  = !gc.hasIpRestriction();
         String displayVal = disabled ? inf() : String.valueOf(gc.getMaxUsesPerIp());
 
         List<String> lore = new ArrayList<>();
@@ -220,7 +237,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 .glow(disabled)
                 .build();
     }
-
 
     private ItemStack buildNumericItem(Material mat, String name, int current,
                                        String valueColor, String hint) {
@@ -259,6 +275,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         if (entries.isEmpty())    lore.add(C_HINT + sc("• (none)"));
         lore.add("");
         lore.add(loreAction("click to edit • separate with |"));
+        lore.add(inputModeHint());
 
         return new ItemBuilder(mat)
                 .name(C_VALUE + sc(name))
@@ -334,6 +351,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                             v -> gc = gc.toBuilder().maxUsesPerIp(v).build());
                 }
             }
+
             case SLOT_PLAYTIME -> adjust(right, shift, 10, gc.getRequiredPlaytimeMinutes(), 0, Integer.MAX_VALUE,
                     v -> gc = gc.toBuilder().requiredPlaytimeMinutes(v).build());
 
@@ -349,14 +367,14 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                     plugin.getCodeManager().update(gc);
                     viewer.playSound(viewer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.5f);
                 } else {
-                    openExpiryDialog();
+                    openExpiryInput();
                     return;
                 }
             }
 
-            case SLOT_PERMISSION -> { openPermissionDialog(); return; }
-            case SLOT_COMMANDS   -> { openCommandsDialog();   return; }
-            case SLOT_MESSAGES   -> { openMessagesDialog();   return; }
+            case SLOT_PERMISSION -> { openPermissionInput(); return; }
+            case SLOT_COMMANDS   -> { openCommandsInput();   return; }
+            case SLOT_MESSAGES   -> { openMessagesInput();   return; }
 
             case SLOT_ITEMS -> {
                 plugin.getGuiListener().deregister(viewer.getUniqueId());
@@ -387,17 +405,94 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         setter.accept(newVal);
     }
 
+    private void openExpiryInput() {
+        if (dialogSupported) {
+            openExpiryDialog();
+        } else {
+            closeThenChat(
+                    "&fEnter the new expiry date &7(format: &e2099-12-31T23:59:59&7)&f, "
+                            + "or leave blank for &b" + inf() + " &f(no expiry):",
+                    raw -> {
+                        gc = gc.toBuilder().expiry(raw == null || raw.isBlank() ? "" : raw.trim()).build();
+                        plugin.getCodeManager().update(gc);
+                        reopenEditor();
+                    }
+            );
+        }
+    }
+
+    private void openPermissionInput() {
+        if (dialogSupported) {
+            openPermissionDialog();
+        } else {
+            closeThenChat(
+                    "&fEnter the permission node for code &e" + gc.getCode()
+                            + "&f, or leave blank to &cremove &fthe requirement:",
+                    raw -> {
+                        gc = gc.withPermission(raw == null ? "" : raw.trim());
+                        plugin.getCodeManager().update(gc);
+                        reopenEditor();
+                    }
+            );
+        }
+    }
+
+    private void openCommandsInput() {
+        if (dialogSupported) {
+            openCommandsDialog();
+        } else {
+            closeThenChat(
+                    "&fEnter commands separated by &e|&f. Use &b%player% &fas the player name placeholder.\n"
+                            + "&8  Current: &7" + String.join(" | ", gc.getCommands()),
+                    raw -> {
+                        if (raw != null && !raw.isBlank()) {
+                            gc = gc.withCommands(Arrays.asList(raw.split("\\|")));
+                            plugin.getCodeManager().update(gc);
+                        }
+                        reopenEditor();
+                    }
+            );
+        }
+    }
+
+    private void openMessagesInput() {
+        if (dialogSupported) {
+            openMessagesDialog();
+        } else {
+            closeThenChat(
+                    "&fEnter messages separated by &e|&f. Supports &a& colour codes&f.\n"
+                            + "&8  Current: &7" + String.join(" | ", gc.getMessages()),
+                    raw -> {
+                        if (raw != null && !raw.isBlank()) {
+                            gc = gc.withMessages(Arrays.asList(raw.split("\\|")));
+                            plugin.getCodeManager().update(gc);
+                        }
+                        reopenEditor();
+                    }
+            );
+        }
+    }
+
+
+    private void closeThenChat(String prompt, java.util.function.Consumer<String> handler) {
+        plugin.getGuiListener().deregister(viewer.getUniqueId());
+        FoliaUtils.runForPlayer(plugin, viewer, () -> {
+            viewer.closeInventory();
+            ChatInputRequest.prompt(plugin, viewer, prompt, handler);
+        });
+    }
+
+
 
     private void openExpiryDialog() {
-        String inf = inf();
         viewer.showDialog(Dialog.create(b -> b.empty()
                 .base(DialogBase.builder(Component.text("Set Expiry Date", NamedTextColor.GOLD))
                         .body(List.of(
                                 DialogBody.plainMessage(Component.text("Current: ").append(
-                                        Component.text(gc.getExpiry().isBlank() ? inf : gc.getExpiry(),
+                                        Component.text(gc.getExpiry().isBlank() ? inf() : gc.getExpiry(),
                                                 NamedTextColor.WHITE))),
                                 DialogBody.plainMessage(Component.text(
-                                        "Format: 2099-12-31T23:59:59  |  Leave blank for " + inf + " (no expiry)",
+                                        "Format: 2099-12-31T23:59:59  |  Leave blank for " + inf() + " (no expiry)",
                                         NamedTextColor.GRAY))
                         ))
                         .inputs(List.of(

@@ -9,6 +9,7 @@ description: Advanced gift code management plugin with GUI editor and Placeholde
 
 softdepend:
   - PlaceholderAPI
+  - ViaVersion
 
 commands:
   giftcodex:
