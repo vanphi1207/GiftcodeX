@@ -5,6 +5,7 @@ import me.ihqqq.giftcodeX.GiftcodeX;
 import me.ihqqq.giftcodeX.manager.CodeManager;
 import me.ihqqq.giftcodeX.manager.PlayerDataManager;
 import me.ihqqq.giftcodeX.model.Giftcode;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,12 @@ import java.util.Optional;
  *  %giftcodex_code_expiry_<code>%
  *  %giftcodex_code_permission_<code>%
  *  %giftcodex_code_playtime_<code>%
+ *  %giftcodex_code_playtime_minutes_<code>%
+ *  %giftcodex_code_playtime_ms_<code>%
  *  %giftcodex_code_playeruses_<code>%
  *  %giftcodex_code_canuseip_<code>%
+ *  %giftcodex_code_playerlimit_<code>%
+ *  %giftcodex_code_iplimit_<code>%
  */
 public final class GiftcodeExpansion extends PlaceholderExpansion {
 
@@ -62,6 +67,20 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
         if (!params.startsWith("code_")) return null;
 
         String rest = params.substring(5);
+
+        if (rest.startsWith("playtime_minutes_")) {
+            String codeName = rest.substring("playtime_minutes_".length());
+            return codeManager.find(codeName)
+                    .map(gc -> String.valueOf(gc.getRequiredPlaytime().toTotalMinutes()))
+                    .orElse("0");
+        }
+        if (rest.startsWith("playtime_ms_")) {
+            String codeName = rest.substring("playtime_ms_".length());
+            return codeManager.find(codeName)
+                    .map(gc -> String.valueOf(gc.getRequiredPlaytime().toMilliseconds()))
+                    .orElse("0");
+        }
+
         int sep = rest.indexOf('_');
         if (sep < 0) return null;
 
@@ -77,7 +96,11 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
             case "used"       -> String.valueOf(codeManager.globalUseCount(codeName));
             case "expiry"     -> opt.map(gc -> gc.getExpiry().isBlank() ? inf : gc.getExpiry()).orElse("N/A");
             case "permission" -> opt.map(gc -> gc.hasPermissionRestriction() ? gc.getPermission() : "None").orElse("N/A");
-            case "playtime"   -> opt.map(gc -> String.valueOf(gc.getRequiredPlaytimeMinutes())).orElse("0");
+
+            case "playtime"   -> opt.map(gc -> {
+                PlaytimeDuration pt = gc.getRequiredPlaytime();
+                return pt.isZero() ? "0m" : pt.toDisplayString();
+            }).orElse("0m");
 
             case "playeruses" -> {
                 if (player == null || opt.isEmpty()) yield "0";
@@ -93,8 +116,7 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
             }
 
             case "playerlimit" -> opt.map(gc -> gc.isUnlimitedPlayerUses() ? inf : String.valueOf(gc.getPlayerMaxUses())).orElse("0");
-
-            case "iplimit"    -> opt.map(gc -> gc.hasIpRestriction() ? String.valueOf(gc.getMaxUsesPerIp()) : inf).orElse("0");
+            case "iplimit"     -> opt.map(gc -> gc.hasIpRestriction() ? String.valueOf(gc.getMaxUsesPerIp()) : inf).orElse("0");
 
             default -> null;
         };

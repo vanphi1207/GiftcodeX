@@ -5,6 +5,7 @@ import me.ihqqq.giftcodeX.gui.CodeEditorGUI;
 import me.ihqqq.giftcodeX.gui.CodeListGUI;
 import me.ihqqq.giftcodeX.gui.ItemEditorGUI;
 import me.ihqqq.giftcodeX.model.Giftcode;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -57,7 +58,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
             case "delete", "del"    -> handleDelete(sender, args);
             case "enable"           -> handleSetEnabled(sender, args, true);
             case "disable"          -> handleSetEnabled(sender, args, false);
-            case "gui", "list"      -> handleGui(sender);   // "list" kept as hidden alias
+            case "gui", "list"      -> handleGui(sender);
             case "edit"             -> handleEdit(sender, args);
             case "items"            -> handleItems(sender, args);
             case "assign"           -> handleAssign(sender, args);
@@ -86,7 +87,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
                 .expiry(plugin.getConfigManager().getDefaultExpiry())
                 .playerMaxUses(plugin.getConfigManager().getDefaultPlayerMaxUses())
                 .maxUsesPerIp(plugin.getConfigManager().getDefaultMaxUsesPerIp())
-                .requiredPlaytimeMinutes(plugin.getConfigManager().getDefaultRequiredPlaytime())
+                .requiredPlaytime(PlaytimeDuration.zero())
                 .enabled(true)
                 .build();
         plugin.getCodeManager().create(newCode);
@@ -193,16 +194,35 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
         String code = args[1];
         plugin.getCodeManager().find(code).ifPresentOrElse(gc -> {
             int used = plugin.getCodeManager().globalUseCount(code);
+            PlaytimeDuration pt = gc.getRequiredPlaytime();
+
             sender.sendMessage(ChatColor.GOLD + "── Code: " + ChatColor.YELLOW + code + ChatColor.GOLD + " ──");
-            sender.sendMessage(info("Enabled",            gc.isEnabled()              ? "&aYes" : "&cNo"));
-            sender.sendMessage(info("Expired",            gc.isExpired()              ? "&cYes" : "&aNo"));
+            sender.sendMessage(info("Enabled",            gc.isEnabled()                ? "&aYes" : "&cNo"));
+            sender.sendMessage(info("Expired",            gc.isExpired()                ? "&cYes" : "&aNo"));
             sender.sendMessage(info("Max Uses (global)",  displayMaxUses(gc.getMaxUses())));
             sender.sendMessage(info("Used (global)",      String.valueOf(used)));
-            sender.sendMessage(info("Per-player limit",   gc.isUnlimitedPlayerUses()  ? inf() : String.valueOf(gc.getPlayerMaxUses())));
-            sender.sendMessage(info("Per-IP limit",       gc.hasIpRestriction()       ? String.valueOf(gc.getMaxUsesPerIp()) : "Disabled"));
-            sender.sendMessage(info("Expiry",             gc.getExpiry().isBlank()    ? inf() : gc.getExpiry()));
-            sender.sendMessage(info("Permission",         gc.hasPermissionRestriction() ? gc.getPermission() : "None"));
-            sender.sendMessage(info("Playtime req.",      gc.hasPlaytimeRequirement() ? gc.getRequiredPlaytimeMinutes() + " min" : "None"));
+            sender.sendMessage(info("Per-player limit",   gc.isUnlimitedPlayerUses()    ? inf() : String.valueOf(gc.getPlayerMaxUses())));
+            sender.sendMessage(info("Per-IP limit",       gc.hasIpRestriction()         ? String.valueOf(gc.getMaxUsesPerIp()) : "Disabled"));
+            sender.sendMessage(info("Expiry",             gc.getExpiry().isBlank()       ? inf() : gc.getExpiry()));
+            sender.sendMessage(info("Permission",         gc.hasPermissionRestriction()  ? gc.getPermission() : "None"));
+
+            // Playtime — show human-readable + total-minutes breakdown
+            if (pt.isZero()) {
+                sender.sendMessage(info("Playtime req.", "None"));
+            } else {
+                sender.sendMessage(info("Playtime req.", pt.toDisplayString()
+                        + " &8(≈ " + pt.toTotalMinutes() + " min)"));
+                sender.sendMessage(info("  breakdown",
+                        pt.getYears()        + "y " +
+                                pt.getMonths()       + "mo " +
+                                pt.getWeeks()        + "w " +
+                                pt.getDays()         + "d " +
+                                pt.getHours()        + "h " +
+                                pt.getMinutes()      + "m " +
+                                pt.getSeconds()      + "s " +
+                                pt.getMilliseconds() + "ms"));
+            }
+
             sender.sendMessage(info("Commands",           String.valueOf(gc.getCommands().size())));
             sender.sendMessage(info("Item rewards",       String.valueOf(gc.getItemRewards().size())));
         }, () -> sender.sendMessage(msg("code-not-found", Map.of("code", code))));

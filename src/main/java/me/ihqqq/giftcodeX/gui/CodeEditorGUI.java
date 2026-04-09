@@ -12,6 +12,7 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import me.ihqqq.giftcodeX.GiftcodeX;
 import me.ihqqq.giftcodeX.gui.base.GiftGUI;
 import me.ihqqq.giftcodeX.model.Giftcode;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import me.ihqqq.giftcodeX.util.ChatInputRequest;
 import me.ihqqq.giftcodeX.util.ClientVersionUtils;
 import me.ihqqq.giftcodeX.util.FoliaUtils;
@@ -42,14 +43,16 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
 
     private static Key key(String path) { return Key.key(NS, path); }
 
-    private static final Key KEY_EXPIRY_CONFIRM = key("editor/expiry/confirm");
-    private static final Key KEY_EXPIRY_CANCEL  = key("editor/expiry/cancel");
-    private static final Key KEY_PERM_CONFIRM   = key("editor/permission/confirm");
-    private static final Key KEY_PERM_CANCEL    = key("editor/permission/cancel");
-    private static final Key KEY_CMDS_CONFIRM   = key("editor/commands/confirm");
-    private static final Key KEY_CMDS_CANCEL    = key("editor/commands/cancel");
-    private static final Key KEY_MSGS_CONFIRM   = key("editor/messages/confirm");
-    private static final Key KEY_MSGS_CANCEL    = key("editor/messages/cancel");
+    private static final Key KEY_EXPIRY_CONFIRM    = key("editor/expiry/confirm");
+    private static final Key KEY_EXPIRY_CANCEL     = key("editor/expiry/cancel");
+    private static final Key KEY_PERM_CONFIRM      = key("editor/permission/confirm");
+    private static final Key KEY_PERM_CANCEL       = key("editor/permission/cancel");
+    private static final Key KEY_CMDS_CONFIRM      = key("editor/commands/confirm");
+    private static final Key KEY_CMDS_CANCEL       = key("editor/commands/cancel");
+    private static final Key KEY_MSGS_CONFIRM      = key("editor/messages/confirm");
+    private static final Key KEY_MSGS_CANCEL       = key("editor/messages/cancel");
+    private static final Key KEY_PLAYTIME_CONFIRM  = key("editor/playtime/confirm");
+    private static final Key KEY_PLAYTIME_CANCEL   = key("editor/playtime/cancel");
 
     private static final int SLOT_INFO       = 4;
     private static final int SLOT_MAX_USES   = 20;
@@ -68,7 +71,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     private static final int UNLIMITED_USES = Integer.MAX_VALUE;
 
     private Giftcode gc;
-
     private final boolean dialogSupported;
 
     public CodeEditorGUI(GiftcodeX plugin, Player viewer, Giftcode gc) {
@@ -76,7 +78,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         this.gc = gc;
         this.dialogSupported = ClientVersionUtils.supportsDialog(viewer);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-
     }
 
 
@@ -87,9 +88,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     private boolean isUnlimitedUses() {
         return gc.getMaxUses() >= UNLIMITED_USES;
     }
-
-    private static String colorize(String s) { return s.replace("&", "§"); }
-
 
 
     @Override
@@ -102,8 +100,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         inv.setItem(SLOT_MAX_USES,   buildMaxUsesItem());
         inv.setItem(SLOT_PLAYER_USE, buildPlayerUseItem());
         inv.setItem(SLOT_IP_USE,     buildIpLimitItem());
-        inv.setItem(SLOT_PLAYTIME,   buildNumericItem(Material.CLOCK, "required playtime",
-                gc.getRequiredPlaytimeMinutes(), C_WARN, "left -1 • right +1 • shift ±10 min"));
+        inv.setItem(SLOT_PLAYTIME,   buildPlaytimeItem());
 
         boolean on = gc.isEnabled();
         inv.setItem(SLOT_TOGGLE, new ItemBuilder(on ? Material.LIME_DYE : Material.GRAY_DYE)
@@ -140,12 +137,42 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     }
 
 
+    private ItemStack buildPlaytimeItem() {
+        PlaytimeDuration pt  = gc.getRequiredPlaytime();
+        boolean hasReq       = !pt.isZero();
+
+        List<String> lore = new ArrayList<>();
+        lore.add(loreLine("required", hasReq ? pt.toDisplayString() : "none", hasReq ? C_WARN : C_HINT));
+        lore.add("");
+
+        // show each field individually
+        lore.add(C_LABEL + sc("breakdown:"));
+        lore.add(loreLine("  years",        String.valueOf(pt.getYears()),        C_VALUE));
+        lore.add(loreLine("  months",       String.valueOf(pt.getMonths()),       C_VALUE));
+        lore.add(loreLine("  weeks",        String.valueOf(pt.getWeeks()),        C_VALUE));
+        lore.add(loreLine("  days",         String.valueOf(pt.getDays()),         C_VALUE));
+        lore.add(loreLine("  hours",        String.valueOf(pt.getHours()),        C_VALUE));
+        lore.add(loreLine("  minutes",      String.valueOf(pt.getMinutes()),      C_VALUE));
+        lore.add(loreLine("  seconds",      String.valueOf(pt.getSeconds()),      C_VALUE));
+        lore.add(loreLine("  milliseconds", String.valueOf(pt.getMilliseconds()), C_VALUE));
+        lore.add("");
+        lore.add(loreAction("click to edit"));
+        lore.add(C_HINT + sc("Q • reset to zero (no requirement)"));
+        lore.add(inputModeHint());
+
+        return new ItemBuilder(Material.CLOCK)
+                .name(C_VALUE + sc("required playtime"))
+                .lore(lore)
+                .glow(!hasReq)
+                .build();
+    }
+
+
     private String inputModeHint() {
         return dialogSupported
                 ? C_HINT + sc("✦ dialog input")
                 : C_WARN + sc("✦ chat input");
     }
-
 
 
     private ItemStack buildInfoItem() {
@@ -235,19 +262,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 .name(C_VALUE + sc("ip limit"))
                 .lore(lore)
                 .glow(disabled)
-                .build();
-    }
-
-    private ItemStack buildNumericItem(Material mat, String name, int current,
-                                       String valueColor, String hint) {
-        List<String> lore = new ArrayList<>();
-        lore.add(loreLine("value", String.valueOf(current), valueColor));
-        lore.add("");
-        lore.add(C_HINT + sc(hint));
-
-        return new ItemBuilder(mat)
-                .name(C_VALUE + sc(name))
-                .lore(lore)
                 .build();
     }
 
@@ -352,8 +366,17 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 }
             }
 
-            case SLOT_PLAYTIME -> adjust(right, shift, 10, gc.getRequiredPlaytimeMinutes(), 0, Integer.MAX_VALUE,
-                    v -> gc = gc.toBuilder().requiredPlaytimeMinutes(v).build());
+            case SLOT_PLAYTIME -> {
+                if (drop) {
+                    gc = gc.withRequiredPlaytime(PlaytimeDuration.zero());
+                    plugin.getCodeManager().update(gc);
+                    viewer.playSound(viewer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.5f);
+                    refresh();
+                } else {
+                    openPlaytimeInput();
+                    return;
+                }
+            }
 
             case SLOT_TOGGLE -> {
                 gc = gc.withEnabled(!gc.isEnabled());
@@ -404,6 +427,98 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         int newVal = Math.max(min, Math.min(max, current + (right ? delta : -delta)));
         setter.accept(newVal);
     }
+
+
+
+    private void openPlaytimeInput() {
+        if (dialogSupported) {
+            openPlaytimeDialog();
+        } else {
+            PlaytimeDuration cur = gc.getRequiredPlaytime();
+            closeThenChat(
+                    "&fEnter the required playtime. Format:\n"
+                            + "&8  &eyears months weeks days hours minutes seconds milliseconds\n"
+                            + "&8  Example: &b0 0 0 1 2 30 0 0 &8(= 1 day, 2 hours, 30 minutes)\n"
+                            + "&8  Current: &7" + cur.toDisplayString()
+                            + "\n&8  Or type &c0 &8to reset to no requirement.",
+                    raw -> {
+                        if (raw == null) { reopenEditor(); return; }
+                        PlaytimeDuration parsed = parsePlaytimeChatInput(raw.trim());
+                        if (parsed != null) {
+                            gc = gc.withRequiredPlaytime(parsed);
+                            plugin.getCodeManager().update(gc);
+                        } else {
+                            viewer.sendMessage(C_BAD + "Invalid format. Expected 8 non-negative numbers separated by spaces.");
+                        }
+                        reopenEditor();
+                    }
+            );
+        }
+    }
+
+    private void openPlaytimeDialog() {
+        PlaytimeDuration cur = gc.getRequiredPlaytime();
+
+        viewer.showDialog(Dialog.create(b -> b.empty()
+                .base(DialogBase.builder(Component.text("Set Required Playtime", NamedTextColor.GOLD))
+                        .body(List.of(
+                                DialogBody.plainMessage(Component.text(
+                                        "Current: " + cur.toDisplayString(), NamedTextColor.YELLOW)),
+                                DialogBody.plainMessage(Component.text(
+                                        "Leave all fields at 0 to disable the playtime requirement.",
+                                        NamedTextColor.GRAY))
+                        ))
+                        .inputs(List.of(
+                                DialogInput.text("years",
+                                                Component.text("Years", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getYears())).maxLength(6).width(80).build(),
+                                DialogInput.text("months",
+                                                Component.text("Months", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getMonths())).maxLength(6).width(80).build(),
+                                DialogInput.text("weeks",
+                                                Component.text("Weeks", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getWeeks())).maxLength(6).width(80).build(),
+                                DialogInput.text("days",
+                                                Component.text("Days", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getDays())).maxLength(6).width(80).build(),
+                                DialogInput.text("hours",
+                                                Component.text("Hours", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getHours())).maxLength(6).width(80).build(),
+                                DialogInput.text("minutes",
+                                                Component.text("Minutes", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getMinutes())).maxLength(6).width(80).build(),
+                                DialogInput.text("seconds",
+                                                Component.text("Seconds", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getSeconds())).maxLength(6).width(80).build(),
+                                DialogInput.text("milliseconds",
+                                                Component.text("Milliseconds", NamedTextColor.AQUA))
+                                        .initial(String.valueOf(cur.getMilliseconds())).maxLength(6).width(80).build()
+                        ))
+                        .build())
+                .type(confirmationType(KEY_PLAYTIME_CONFIRM, KEY_PLAYTIME_CANCEL))
+        ));
+    }
+
+    private static PlaytimeDuration parsePlaytimeChatInput(String raw) {
+        if (raw.equals("0")) return PlaytimeDuration.zero();
+        String[] parts = raw.split("\\s+");
+        if (parts.length != 8) return null;
+        try {
+            return new PlaytimeDuration.Builder()
+                    .years(        Math.max(0, Integer.parseInt(parts[0])))
+                    .months(       Math.max(0, Integer.parseInt(parts[1])))
+                    .weeks(        Math.max(0, Integer.parseInt(parts[2])))
+                    .days(         Math.max(0, Integer.parseInt(parts[3])))
+                    .hours(        Math.max(0, Integer.parseInt(parts[4])))
+                    .minutes(      Math.max(0, Integer.parseInt(parts[5])))
+                    .seconds(      Math.max(0, Integer.parseInt(parts[6])))
+                    .milliseconds( Math.max(0, Integer.parseInt(parts[7])))
+                    .build();
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
 
     private void openExpiryInput() {
         if (dialogSupported) {
@@ -481,7 +596,6 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
             ChatInputRequest.prompt(plugin, viewer, prompt, handler);
         });
     }
-
 
 
     private void openExpiryDialog() {
@@ -585,7 +699,24 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         Key id   = event.getIdentifier();
         var view = event.getDialogResponseView();
 
-        if (id.equals(KEY_EXPIRY_CONFIRM) && view != null) {
+        if (id.equals(KEY_PLAYTIME_CONFIRM) && view != null) {
+            int years  = parseField(view.getText("years"));
+            int months = parseField(view.getText("months"));
+            int weeks  = parseField(view.getText("weeks"));
+            int days   = parseField(view.getText("days"));
+            int hours  = parseField(view.getText("hours"));
+            int mins   = parseField(view.getText("minutes"));
+            int secs   = parseField(view.getText("seconds"));
+            int ms     = parseField(view.getText("milliseconds"));
+
+            PlaytimeDuration newPt = new PlaytimeDuration.Builder()
+                    .years(years).months(months).weeks(weeks).days(days)
+                    .hours(hours).minutes(mins).seconds(secs).milliseconds(ms)
+                    .build();
+            gc = gc.withRequiredPlaytime(newPt);
+            plugin.getCodeManager().update(gc);
+
+        } else if (id.equals(KEY_EXPIRY_CONFIRM) && view != null) {
             String raw = view.getText("expiry");
             gc = gc.toBuilder().expiry(raw == null ? "" : raw.trim()).build();
             plugin.getCodeManager().update(gc);
@@ -608,6 +739,12 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         }
 
         reopenEditor();
+    }
+
+    private static int parseField(String raw) {
+        if (raw == null || raw.isBlank()) return 0;
+        try { return Math.max(0, Integer.parseInt(raw.trim())); }
+        catch (NumberFormatException e) { return 0; }
     }
 
 

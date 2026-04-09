@@ -1,8 +1,10 @@
 package me.ihqqq.giftcodeX.command;
 
 import me.ihqqq.giftcodeX.GiftcodeX;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import me.ihqqq.giftcodeX.model.RedeemResult;
 import org.bukkit.ChatColor;
+import org.bukkit.Statistic;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -36,15 +38,44 @@ public final class RedeemCommand implements CommandExecutor {
 
         if (result == RedeemResult.NOT_ENOUGH_PLAYTIME) {
             plugin.getCodeManager().find(code).ifPresent(gc -> {
-                int current = player.getStatistic(org.bukkit.Statistic.PLAY_ONE_MINUTE) / (20 * 60);
+                long ticksPlayed   = player.getStatistic(Statistic.PLAY_ONE_MINUTE);
+                long msPlayed      = (ticksPlayed * 1000L) / 20L;
+                PlaytimeDuration current  = buildCurrentDuration(msPlayed);
+                PlaytimeDuration required = gc.getRequiredPlaytime();
+
                 player.sendMessage(plugin.getMessageConfig().get(result.getMessageKey(), Map.of(
-                        "required", String.valueOf(gc.getRequiredPlaytimeMinutes()),
-                        "current",  String.valueOf(current)
+                        "required", required.toDisplayString(),
+                        "current",  current.toDisplayString()
                 )));
             });
         } else {
             player.sendMessage(plugin.getMessageConfig().getForResult(result));
         }
         return true;
+    }
+
+    private static PlaytimeDuration buildCurrentDuration(long ms) {
+        final long MS_YEAR  = 365L * 24 * 60 * 60 * 1000;
+        final long MS_MONTH =  30L * 24 * 60 * 60 * 1000;
+        final long MS_WEEK  =   7L * 24 * 60 * 60 * 1000;
+        final long MS_DAY   =       24L * 60 * 60 * 1000;
+        final long MS_HOUR  =            60L * 60 * 1000;
+        final long MS_MIN   =                 60L * 1000;
+        final long MS_SEC   =                      1000L;
+
+        long rem = ms;
+        int years = (int)(rem / MS_YEAR);   rem %= MS_YEAR;
+        int months= (int)(rem / MS_MONTH);  rem %= MS_MONTH;
+        int weeks = (int)(rem / MS_WEEK);   rem %= MS_WEEK;
+        int days  = (int)(rem / MS_DAY);    rem %= MS_DAY;
+        int hours = (int)(rem / MS_HOUR);   rem %= MS_HOUR;
+        int mins  = (int)(rem / MS_MIN);    rem %= MS_MIN;
+        int secs  = (int)(rem / MS_SEC);    rem %= MS_SEC;
+        int millis= (int) rem;
+
+        return new PlaytimeDuration.Builder()
+                .years(years).months(months).weeks(weeks).days(days)
+                .hours(hours).minutes(mins).seconds(secs).milliseconds(millis)
+                .build();
     }
 }

@@ -3,6 +3,7 @@ package me.ihqqq.giftcodeX.manager;
 import me.ihqqq.giftcodeX.GiftcodeX;
 import me.ihqqq.giftcodeX.model.Giftcode;
 import me.ihqqq.giftcodeX.model.PlayerData;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import me.ihqqq.giftcodeX.model.RedeemResult;
 import me.ihqqq.giftcodeX.storage.CodeRepository;
 import me.ihqqq.giftcodeX.util.FoliaUtils;
@@ -15,7 +16,7 @@ import java.security.SecureRandom;
 import java.util.*;
 
 public final class CodeManager {
-    private static final String RANDOM_CHARS    = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+    private static final String RANDOM_CHARS      = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
     private static final int    RANDOM_SUFFIX_LEN = 8;
 
     public static final int UNLIMITED_USES = Integer.MAX_VALUE;
@@ -134,7 +135,7 @@ public final class CodeManager {
                 .enabled(true)
                 .playerMaxUses(1)
                 .maxUsesPerIp(1)
-                .requiredPlaytimeMinutes(0);
+                .requiredPlaytime(PlaytimeDuration.zero());
     }
 
 
@@ -152,8 +153,9 @@ public final class CodeManager {
         }
 
         if (gc.hasPlaytimeRequirement()) {
-            int minutesPlayed = player.getStatistic(Statistic.PLAY_ONE_MINUTE) / (20 * 60);
-            if (minutesPlayed < gc.getRequiredPlaytimeMinutes()) {
+            long ticksPlayed = player.getStatistic(Statistic.PLAY_ONE_MINUTE);
+            long msPlayed    = (ticksPlayed * 1000L) / 20L;
+            if (msPlayed < gc.getRequiredPlaytime().toMilliseconds()) {
                 return RedeemResult.NOT_ENOUGH_PLAYTIME;
             }
         }
@@ -183,7 +185,6 @@ public final class CodeManager {
     }
 
 
-
     public void assign(Player player, String code) {
         Giftcode gc = codes.get(code);
         if (gc == null) return;
@@ -207,8 +208,8 @@ public final class CodeManager {
 
         if (!gc.getItemRewards().isEmpty() || !gc.getMessages().isEmpty()) {
             List<ItemStack> items = gc.getItemRewards();
-            List<String> msgs    = gc.getMessages();
-            String color         = plugin.getConfigManager().getRewardColor();
+            List<String>    msgs  = gc.getMessages();
+            String color          = plugin.getConfigManager().getRewardColor();
 
             FoliaUtils.runForPlayer(plugin, player, () -> {
                 for (ItemStack item : items) {
@@ -225,9 +226,7 @@ public final class CodeManager {
     }
 
 
-    private String colorize(String text) {
-        return text.replace("&", "§");
-    }
+    private String colorize(String text) { return text.replace("&", "§"); }
 
     private String resolveIp(Player player) {
         try {

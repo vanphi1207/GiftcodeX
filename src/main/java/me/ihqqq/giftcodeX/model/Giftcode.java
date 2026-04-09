@@ -25,7 +25,7 @@ public final class Giftcode {
     private final int maxUses;
     private final int playerMaxUses;   // -1 = unlimited
     private final int maxUsesPerIp;    // 0  = disabled
-    private final int requiredPlaytimeMinutes;
+    private final PlaytimeDuration requiredPlaytime;
     private final boolean enabled;
 
     private Giftcode(Builder b) {
@@ -38,17 +38,18 @@ public final class Giftcode {
         this.maxUses = b.maxUses;
         this.playerMaxUses = b.playerMaxUses;
         this.maxUsesPerIp = b.maxUsesPerIp;
-        this.requiredPlaytimeMinutes = b.requiredPlaytimeMinutes;
+        this.requiredPlaytime = b.requiredPlaytime != null ? b.requiredPlaytime : PlaytimeDuration.zero();
         this.enabled = b.enabled;
     }
 
 
-    public Giftcode withMaxUses(int maxUses)               { return toBuilder().maxUses(maxUses).build(); }
-    public Giftcode withEnabled(boolean enabled)           { return toBuilder().enabled(enabled).build(); }
-    public Giftcode withPermission(String permission)      { return toBuilder().permission(permission).build(); }
-    public Giftcode withItemRewards(List<ItemStack> items) { return toBuilder().itemRewards(items).build(); }
-    public Giftcode withCommands(List<String> commands)    { return toBuilder().commands(commands).build(); }
-    public Giftcode withMessages(List<String> messages)    { return toBuilder().messages(messages).build(); }
+    public Giftcode withMaxUses(int maxUses)                          { return toBuilder().maxUses(maxUses).build(); }
+    public Giftcode withEnabled(boolean enabled)                      { return toBuilder().enabled(enabled).build(); }
+    public Giftcode withPermission(String permission)                 { return toBuilder().permission(permission).build(); }
+    public Giftcode withItemRewards(List<ItemStack> items)            { return toBuilder().itemRewards(items).build(); }
+    public Giftcode withCommands(List<String> commands)               { return toBuilder().commands(commands).build(); }
+    public Giftcode withMessages(List<String> messages)               { return toBuilder().messages(messages).build(); }
+    public Giftcode withRequiredPlaytime(PlaytimeDuration d)          { return toBuilder().requiredPlaytime(d).build(); }
 
 
     public boolean isExpired() {
@@ -67,9 +68,10 @@ public final class Giftcode {
 
     public boolean hasPermissionRestriction()  { return permission != null && !permission.isBlank(); }
     public boolean hasIpRestriction()          { return maxUsesPerIp > 0; }
-    public boolean hasPlaytimeRequirement()    { return requiredPlaytimeMinutes > 0; }
+    public boolean hasPlaytimeRequirement()    { return !requiredPlaytime.isZero(); }
     public boolean isUnlimitedPlayerUses()     { return playerMaxUses < 0; }
 
+    public long getRequiredPlaytimeMinutes()   { return requiredPlaytime.toTotalMinutes(); }
 
     public Builder toBuilder() {
         return new Builder(code)
@@ -81,22 +83,22 @@ public final class Giftcode {
                 .maxUses(maxUses)
                 .playerMaxUses(playerMaxUses)
                 .maxUsesPerIp(maxUsesPerIp)
-                .requiredPlaytimeMinutes(requiredPlaytimeMinutes)
+                .requiredPlaytime(requiredPlaytime)
                 .enabled(enabled);
     }
 
 
-    public String getCode()                    { return code; }
-    public List<String> getCommands()          { return commands; }
-    public List<String> getMessages()          { return messages; }
-    public List<ItemStack> getItemRewards()    { return itemRewards; }
-    public String getPermission()              { return permission; }
-    public String getExpiry()                  { return expiry; }
-    public int getMaxUses()                    { return maxUses; }
-    public int getPlayerMaxUses()              { return playerMaxUses; }
-    public int getMaxUsesPerIp()               { return maxUsesPerIp; }
-    public int getRequiredPlaytimeMinutes()    { return requiredPlaytimeMinutes; }
-    public boolean isEnabled()                 { return enabled; }
+    public String getCode()                          { return code; }
+    public List<String> getCommands()                { return commands; }
+    public List<String> getMessages()                { return messages; }
+    public List<ItemStack> getItemRewards()          { return itemRewards; }
+    public String getPermission()                    { return permission; }
+    public String getExpiry()                        { return expiry; }
+    public int getMaxUses()                          { return maxUses; }
+    public int getPlayerMaxUses()                    { return playerMaxUses; }
+    public int getMaxUsesPerIp()                     { return maxUsesPerIp; }
+    public PlaytimeDuration getRequiredPlaytime()    { return requiredPlaytime; }
+    public boolean isEnabled()                       { return enabled; }
 
 
     public static final class Builder {
@@ -109,23 +111,24 @@ public final class Giftcode {
         private int maxUses = 100;
         private int playerMaxUses = 1;
         private int maxUsesPerIp = 1;
-        private int requiredPlaytimeMinutes = 0;
+        private PlaytimeDuration requiredPlaytime = PlaytimeDuration.zero();
         private boolean enabled = true;
 
         public Builder(String code) {
             this.code = Objects.requireNonNull(code, "code cannot be null");
         }
 
-        public Builder commands(List<String> v)          { this.commands = new ArrayList<>(v); return this; }
-        public Builder messages(List<String> v)          { this.messages = new ArrayList<>(v); return this; }
-        public Builder itemRewards(List<ItemStack> v)    { this.itemRewards = new ArrayList<>(v); return this; }
-        public Builder permission(String v)              { this.permission = v; return this; }
-        public Builder expiry(String v)                  { this.expiry = v; return this; }
-        public Builder maxUses(int v)                    { this.maxUses = v; return this; }
-        public Builder playerMaxUses(int v)              { this.playerMaxUses = v; return this; }
-        public Builder maxUsesPerIp(int v)               { this.maxUsesPerIp = v; return this; }
-        public Builder requiredPlaytimeMinutes(int v)    { this.requiredPlaytimeMinutes = v; return this; }
-        public Builder enabled(boolean v)                { this.enabled = v; return this; }
+        public Builder commands(List<String> v)               { this.commands = new ArrayList<>(v); return this; }
+        public Builder messages(List<String> v)               { this.messages = new ArrayList<>(v); return this; }
+        public Builder itemRewards(List<ItemStack> v)         { this.itemRewards = new ArrayList<>(v); return this; }
+        public Builder permission(String v)                   { this.permission = v; return this; }
+        public Builder expiry(String v)                       { this.expiry = v; return this; }
+        public Builder maxUses(int v)                         { this.maxUses = v; return this; }
+        public Builder playerMaxUses(int v)                   { this.playerMaxUses = v; return this; }
+        public Builder maxUsesPerIp(int v)                    { this.maxUsesPerIp = v; return this; }
+        public Builder requiredPlaytime(PlaytimeDuration v)   { this.requiredPlaytime = v; return this; }
+        public Builder requiredPlaytimeMinutes(int minutes)   { this.requiredPlaytime = PlaytimeDuration.ofMinutes(minutes); return this; }
+        public Builder enabled(boolean v)                     { this.enabled = v; return this; }
 
         public Giftcode build() { return new Giftcode(this); }
     }

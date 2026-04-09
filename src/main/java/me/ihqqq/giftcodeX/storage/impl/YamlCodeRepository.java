@@ -1,6 +1,7 @@
 package me.ihqqq.giftcodeX.storage.impl;
 
 import me.ihqqq.giftcodeX.model.Giftcode;
+import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import me.ihqqq.giftcodeX.storage.CodeRepository;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -49,7 +50,6 @@ public final class YamlCodeRepository implements CodeRepository {
 
     @Override
     public void saveAll(Map<String, Giftcode> codes) {
-        // Clear existing keys
         for (String key : new ArrayList<>(config.getKeys(false))) {
             config.set(key, null);
         }
@@ -62,7 +62,6 @@ public final class YamlCodeRepository implements CodeRepository {
         config = YamlConfiguration.loadConfiguration(file);
     }
 
-    // ── Serialization ──────────────────────────────────────────────────────
 
     private Giftcode deserialize(String key) {
         String base = key + ".";
@@ -78,6 +77,8 @@ public final class YamlCodeRepository implements CodeRepository {
             }
         }
 
+        PlaytimeDuration playtime = deserializePlaytime(base);
+
         return new Giftcode.Builder(key)
                 .commands(commands)
                 .messages(messages)
@@ -86,24 +87,60 @@ public final class YamlCodeRepository implements CodeRepository {
                 .enabled(config.getBoolean(base + "enabled", true))
                 .playerMaxUses(config.getInt(base + "player-max-uses", 1))
                 .maxUsesPerIp(config.getInt(base + "max-uses-per-ip", 1))
-                .requiredPlaytimeMinutes(config.getInt(base + "required-playtime", 0))
+                .requiredPlaytime(playtime)
                 .permission(config.getString(base + "permission", ""))
                 .itemRewards(items)
                 .build();
     }
 
+    private PlaytimeDuration deserializePlaytime(String base) {
+        String sectionKey = base + "required-playtime";
+        Object raw = config.get(sectionKey);
+
+        if (raw instanceof Number number) {
+            return PlaytimeDuration.ofMinutes(number.intValue());
+        }
+
+        if (config.isConfigurationSection(sectionKey)) {
+            return new PlaytimeDuration.Builder()
+                    .years(config.getInt(sectionKey + ".years", 0))
+                    .months(config.getInt(sectionKey + ".months", 0))
+                    .weeks(config.getInt(sectionKey + ".weeks", 0))
+                    .days(config.getInt(sectionKey + ".days", 0))
+                    .hours(config.getInt(sectionKey + ".hours", 0))
+                    .minutes(config.getInt(sectionKey + ".minutes", 0))
+                    .seconds(config.getInt(sectionKey + ".seconds", 0))
+                    .milliseconds(config.getInt(sectionKey + ".milliseconds", 0))
+                    .build();
+        }
+
+        return PlaytimeDuration.zero();
+    }
+
     private void serialize(String key, Giftcode gc) {
         String base = key + ".";
-        config.set(base + "commands",         gc.getCommands());
-        config.set(base + "messages",         gc.getMessages());
-        config.set(base + "max-uses",         gc.getMaxUses());
-        config.set(base + "expiry",           gc.getExpiry());
-        config.set(base + "enabled",          gc.isEnabled());
-        config.set(base + "player-max-uses",  gc.getPlayerMaxUses());
-        config.set(base + "max-uses-per-ip",  gc.getMaxUsesPerIp());
-        config.set(base + "required-playtime",gc.getRequiredPlaytimeMinutes());
-        config.set(base + "permission",       gc.getPermission());
-        config.set(base + "items",            gc.getItemRewards().isEmpty() ? null : gc.getItemRewards());
+        config.set(base + "commands",          gc.getCommands());
+        config.set(base + "messages",          gc.getMessages());
+        config.set(base + "max-uses",          gc.getMaxUses());
+        config.set(base + "expiry",            gc.getExpiry());
+        config.set(base + "enabled",           gc.isEnabled());
+        config.set(base + "player-max-uses",   gc.getPlayerMaxUses());
+        config.set(base + "max-uses-per-ip",   gc.getMaxUsesPerIp());
+        config.set(base + "permission",        gc.getPermission());
+        config.set(base + "items",             gc.getItemRewards().isEmpty() ? null : gc.getItemRewards());
+        serializePlaytime(base, gc.getRequiredPlaytime());
+    }
+
+    private void serializePlaytime(String base, PlaytimeDuration d) {
+        String section = base + "required-playtime";
+        config.set(section + ".years",        d.getYears());
+        config.set(section + ".months",       d.getMonths());
+        config.set(section + ".weeks",        d.getWeeks());
+        config.set(section + ".days",         d.getDays());
+        config.set(section + ".hours",        d.getHours());
+        config.set(section + ".minutes",      d.getMinutes());
+        config.set(section + ".seconds",      d.getSeconds());
+        config.set(section + ".milliseconds", d.getMilliseconds());
     }
 
     private void flush() {
