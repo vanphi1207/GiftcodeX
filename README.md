@@ -1,4 +1,5 @@
-<img width="2048" height="441" alt="minecraft_title" src="https://github.com/user-attachments/assets/3f223d13-89c5-40ad-8b3a-373508cf0a1b" />
+<img width="2048" height="441" alt="minecraft_title" src="https://github.com/user-attachments/assets/69e43a1a-b547-4401-a8b3-d272811f2726" />
+
 
 
  
@@ -36,10 +37,13 @@
 | Requirement | Version |
 |---|---|
 | Java | 21+ |
-| Paper / Folia | 1.21.6+ |
+| Paper / Folia | 1.21+ |
 | PlaceholderAPI | 2.11+ *(optional)* |
+| ViaVersion | Latest *(optional)* |
 
 > **Note:** Spigot is **not** supported. You must use [Paper](https://papermc.io/downloads/paper) or [Folia](https://papermc.io/downloads/folia).
+
+> **ViaVersion:** Optionally install [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) to support players joining on older clients (below 1.21.6). The plugin automatically detects legacy clients and switches from Dialog input to chat input mode.
 
 ---
 
@@ -141,7 +145,7 @@ code-expired:        "&cThis gift code has expired."
 max-uses-reached:    "&cThis gift code has reached its global usage limit."
 already-redeemed:    "&cYou have already used this code the maximum allowed number of times."
 ip-limit-reached:    "&cThis gift code has been used too many times from your IP address."
-not-enough-playtime: "&cYou need at least &e{required} &cminutes of playtime to use this code. &7(You have: &e{current} &7min)"
+not-enough-playtime: "&cYou need at least &e{required} &cof playtime to use this code. &7(You have: &e{current}&7)"
 no-permission:       "&cYou do not have permission to use this gift code."
 ```
 
@@ -163,7 +167,15 @@ SUMMER24:
   enabled: true
   player-max-uses: 1           # -1 = unlimited per player
   max-uses-per-ip: 2           # 0 = disabled
-  required-playtime: 0         # 0 = no requirement (minutes)
+  required-playtime:           # Full duration model (auto-migrated from plain integer)
+    years: 0
+    months: 0
+    weeks: 0
+    days: 0
+    hours: 0
+    minutes: 0
+    seconds: 0
+    milliseconds: 0
   permission: ""               # Leave blank for no permission required
   items: []                    # Set item rewards via /gcx items <code>
 ```
@@ -179,7 +191,7 @@ SUMMER24:
 | `enabled` | `true` / `false` |
 | `player-max-uses` | Per-player redemption limit. `-1` = unlimited |
 | `max-uses-per-ip` | Per-IP redemption limit. `0` = disabled |
-| `required-playtime` | Minimum playtime in minutes before a player can redeem. `0` = no requirement |
+| `required-playtime` | Duration model with fields: `years`, `months`, `weeks`, `days`, `hours`, `minutes`, `seconds`, `milliseconds`. Old plain-integer values (minutes) are auto-migrated on reload |
 | `permission` | Required permission node. Leave empty for none |
 | `items` | ItemStack-serialized item rewards — managed via `/gcx items <code>` |
 
@@ -200,11 +212,24 @@ Install [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/
 | `%giftcodex_code_used_<code>%` | Total times the code has been redeemed (all players) |
 | `%giftcodex_code_expiry_<code>%` | Expiry date string, or the configured infinity symbol |
 | `%giftcodex_code_permission_<code>%` | Required permission, or `None` |
-| `%giftcodex_code_playtime_<code>%` | Required playtime in minutes |
+| `%giftcodex_code_playtime_<code>%` | Required playtime as a human-readable string (e.g. `1d 2h 30m`) |
+| `%giftcodex_code_playtime_minutes_<code>%` | Required playtime converted to total minutes |
+| `%giftcodex_code_playtime_ms_<code>%` | Required playtime in milliseconds |
 | `%giftcodex_code_playeruses_<code>%` | Times *this player* has redeemed the code |
 | `%giftcodex_code_canuseip_<code>%` | `true` / `false` — whether the player's IP is still under the limit |
 | `%giftcodex_code_playerlimit_<code>%` | Per-player use limit, or the infinity symbol if unlimited |
 | `%giftcodex_code_iplimit_<code>%` | Per-IP use limit, or the infinity symbol if disabled |
+
+---
+
+## ViaVersion Support
+
+When [ViaVersion](https://www.spigotmc.org/resources/viaversion.19254/) is installed, GiftcodeX automatically detects each admin's client version:
+
+- **1.21.6+ clients** use the native **Dialog** input (a popup form with labeled fields).
+- **Legacy clients (below 1.21.6)** fall back to **chat input** mode automatically.
+
+The GUI editor displays a hint in each item's lore indicating which input mode is active for the current viewer (`dialog input` or `chat input`). No configuration is required.
 
 ---
 
