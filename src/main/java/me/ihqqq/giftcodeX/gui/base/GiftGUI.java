@@ -110,7 +110,7 @@ public abstract class GiftGUI {
 
 
     protected String loreSep() {
-        return C_SEP + "  ─────────────────";
+        return C_SEP + "────────────────────";
     }
 
 
