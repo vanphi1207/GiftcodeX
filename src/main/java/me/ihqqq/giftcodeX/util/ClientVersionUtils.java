@@ -7,14 +7,28 @@ public final class ClientVersionUtils {
 
     private static final int PROTOCOL_1_21_6 = 771;
 
+    private static final boolean IS_DIALOG_API_AVAILABLE;
+    static {
+        boolean available = false;
+        try {
+            Class.forName("io.papermc.paper.dialog.Dialog");
+            available = true;
+        } catch (ClassNotFoundException ignored) {}
+        IS_DIALOG_API_AVAILABLE = available;
+    }
+
     private static volatile Object viaApi = null;
     private static volatile boolean viaChecked = false;
 
     private ClientVersionUtils() {}
 
+    public static boolean isDialogApiAvailable() {
+        return IS_DIALOG_API_AVAILABLE;
+    }
+
 
     public static boolean supportsDialog(Player player) {
-        return getClientProtocol(player) >= PROTOCOL_1_21_6;
+        return IS_DIALOG_API_AVAILABLE && getClientProtocol(player) >= PROTOCOL_1_21_6;
     }
 
 

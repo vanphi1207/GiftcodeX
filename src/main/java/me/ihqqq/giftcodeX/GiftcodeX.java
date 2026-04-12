@@ -34,7 +34,7 @@ public final class GiftcodeX extends JavaPlugin {
 
         if (!isSupportedVersion()) {
             getLogger().severe("========================================");
-            getLogger().severe(" GiftcodeX requires server version 1.21.6+");
+            getLogger().severe(" GiftcodeX requires server version 1.21.+");
             getLogger().severe("========================================");
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -98,7 +98,7 @@ public final class GiftcodeX extends JavaPlugin {
     private boolean isSupportedVersion() {
         String[] v = getServer().getBukkitVersion().split("-")[0].split("\\.");
         int[] current  = { Integer.parseInt(v[0]), Integer.parseInt(v[1]), v.length > 2 ? Integer.parseInt(v[2]) : 0 };
-        int[] required = { 1, 21, 6 };
+        int[] required = { 1, 21, 0 };
         for (int i = 0; i < required.length; i++) {
             if (current[i] > required[i]) return true;
             if (current[i] < required[i]) return false;
