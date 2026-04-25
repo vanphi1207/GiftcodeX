@@ -20,20 +20,20 @@ public final class ItemBuilder {
     }
 
     public ItemBuilder name(String name) {
-        meta.setDisplayName(colorize(name));
+        meta.setDisplayName(ColorUtil.colorize(name));
         return this;
     }
 
     public ItemBuilder lore(List<String> lines) {
         List<String> lore = new ArrayList<>();
-        for (String line : lines) lore.add(colorize(line));
+        for (String line : lines) lore.add(ColorUtil.colorize(line));
         meta.setLore(lore);
         return this;
     }
 
     public ItemBuilder appendLore(String... lines) {
         List<String> lore = meta.getLore() != null ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-        for (String line : lines) lore.add(colorize(line));
+        for (String line : lines) lore.add(ColorUtil.colorize(line));
         meta.setLore(lore);
         return this;
     }
@@ -52,9 +52,5 @@ public final class ItemBuilder {
     public ItemStack build() {
         item.setItemMeta(meta);
         return item;
-    }
-
-    private static String colorize(String s) {
-        return s == null ? "" : s.replace("&", "§");
     }
 }

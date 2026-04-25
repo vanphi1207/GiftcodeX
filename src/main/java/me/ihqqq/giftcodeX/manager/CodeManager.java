@@ -6,6 +6,7 @@ import me.ihqqq.giftcodeX.model.PlayerData;
 import me.ihqqq.giftcodeX.model.PlaytimeDuration;
 import me.ihqqq.giftcodeX.model.RedeemResult;
 import me.ihqqq.giftcodeX.storage.CodeRepository;
+import me.ihqqq.giftcodeX.util.ColorUtil;
 import me.ihqqq.giftcodeX.util.FoliaUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Statistic;
@@ -34,7 +35,6 @@ public final class CodeManager {
         this.playerDataManager = playerDataManager;
         this.codes = Collections.synchronizedMap(new LinkedHashMap<>(repository.loadAll()));
     }
-
 
     public Optional<Giftcode> find(String code) {
         return Optional.ofNullable(codes.get(code));
@@ -84,7 +84,6 @@ public final class CodeManager {
     public int globalUseCount(String code) {
         return playerDataManager.globalUseCount(code);
     }
-
 
     public int generateRandom(String prefix, int amount) {
         return generateRandomFromTemplate(prefix, amount, null);
@@ -138,12 +137,11 @@ public final class CodeManager {
                 .requiredPlaytime(PlaytimeDuration.zero());
     }
 
-
     public RedeemResult redeem(Player player, String rawCode) {
         Giftcode gc = codes.get(rawCode);
-        if (gc == null) return RedeemResult.INVALID_CODE;
-        if (!gc.isEnabled()) return RedeemResult.CODE_DISABLED;
-        if (gc.isExpired()) return RedeemResult.CODE_EXPIRED;
+        if (gc == null)         return RedeemResult.INVALID_CODE;
+        if (!gc.isEnabled())    return RedeemResult.CODE_DISABLED;
+        if (gc.isExpired())     return RedeemResult.CODE_EXPIRED;
 
         boolean unlimitedGlobal = gc.getMaxUses() >= UNLIMITED_USES;
         if (!unlimitedGlobal && gc.getMaxUses() <= 0) return RedeemResult.MAX_USES_REACHED;
@@ -175,8 +173,7 @@ public final class CodeManager {
         executeRewards(player, gc);
 
         if (!unlimitedGlobal) {
-            Giftcode updated = gc.withMaxUses(gc.getMaxUses() - 1);
-            codes.put(rawCode, updated);
+            codes.put(rawCode, gc.withMaxUses(gc.getMaxUses() - 1));
         }
         playerDataManager.recordRedemption(player, rawCode);
         saveAll();
@@ -184,14 +181,12 @@ public final class CodeManager {
         return RedeemResult.SUCCESS;
     }
 
-
     public void assign(Player player, String code) {
         Giftcode gc = codes.get(code);
         if (gc == null) return;
         executeRewards(player, gc);
         playerDataManager.recordAssignment(player.getUniqueId(), code);
     }
-
 
     private void executeRewards(Player player, Giftcode gc) {
         if (!gc.getCommands().isEmpty()) {
@@ -219,14 +214,12 @@ public final class CodeManager {
                             player.getWorld().dropItemNaturally(player.getLocation(), lf));
                 }
                 for (String msg : msgs) {
-                    player.sendMessage(colorize(color + msg));
+                    player.sendMessage(ColorUtil.colorize(color + msg));
                 }
             });
         }
     }
 
-
-    private String colorize(String text) { return text.replace("&", "§"); }
 
     private String resolveIp(Player player) {
         try {

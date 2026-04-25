@@ -2,6 +2,7 @@ package me.ihqqq.giftcodeX.config;
 
 import me.ihqqq.giftcodeX.GiftcodeX;
 import me.ihqqq.giftcodeX.model.RedeemResult;
+import me.ihqqq.giftcodeX.util.ColorUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -51,25 +52,25 @@ public final class MessageConfig {
         cfg = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "messages.yml"));
     }
 
-
     public String getInfinitySymbol() {
         return cfg.getString("infinity-symbol", DEFAULTS.get("infinity-symbol"));
     }
-
 
     public String get(String key) {
         return get(key, Map.of());
     }
 
+
     public String get(String key, Map<String, String> placeholders) {
         String prefix = cfg.getString("prefix", DEFAULTS.get("prefix"));
         String raw    = cfg.getString(key, DEFAULTS.getOrDefault(key, "&c[Missing: " + key + "]"));
 
-        String result = (prefix + raw).replace("&", "§");
+        String result = prefix + raw;
         for (Map.Entry<String, String> e : placeholders.entrySet()) {
             result = result.replace("{" + e.getKey() + "}", e.getValue());
         }
-        return result;
+
+        return ColorUtil.colorize(result);
     }
 
     public String getForResult(RedeemResult result) {

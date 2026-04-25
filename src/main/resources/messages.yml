@@ -2,6 +2,9 @@
 # │              GiftcodeX  ·  messages.yml              │
 # └──────────────────────────────────────────────────────┘
 
+#   Legacy codes: &
+#   Hex colour: &#
+
 prefix: "&8[&bGiftcodeX&8] "
 
 # Symbol displayed when a value is unlimited (player-max-uses: -1) or has no expiry
