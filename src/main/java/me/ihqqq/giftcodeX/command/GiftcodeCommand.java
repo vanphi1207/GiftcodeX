@@ -206,7 +206,6 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(info("Expiry",             gc.getExpiry().isBlank()       ? inf() : gc.getExpiry()));
             sender.sendMessage(info("Permission",         gc.hasPermissionRestriction()  ? gc.getPermission() : "None"));
 
-            // Playtime — show human-readable + total-minutes breakdown
             if (pt.isZero()) {
                 sender.sendMessage(info("Playtime req.", "None"));
             } else {
@@ -225,6 +224,8 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
 
             sender.sendMessage(info("Commands",           String.valueOf(gc.getCommands().size())));
             sender.sendMessage(info("Item rewards",       String.valueOf(gc.getItemRewards().size())));
+            sender.sendMessage(info("Language",           plugin.getMessageConfig().getLanguage()));
+
         }, () -> sender.sendMessage(msg("code-not-found", Map.of("code", code))));
     }
 
@@ -255,6 +256,8 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
         plugin.getMessageConfig().reload();
         plugin.getCodeManager().reloadFromDisk();
         sender.sendMessage(msg("plugin-reloaded"));
+        sender.sendMessage(ChatColor.GRAY + "  Active language: " + ChatColor.AQUA
+                + plugin.getMessageConfig().getLanguage());
     }
 
 
@@ -271,7 +274,7 @@ public final class GiftcodeCommand implements CommandExecutor, TabCompleter {
         helpLine(sender, "/gcx setperm <code> <perm|none>",             "Set/clear permission requirement");
         helpLine(sender, "/gcx info <code>",                            "Show code information");
         helpLine(sender, "/gcx random <prefix> [amount] [-c <tmpl>]",   "Generate random codes");
-        helpLine(sender, "/gcx reload",                                  "Reload configuration");
+        helpLine(sender, "/gcx reload",                                  "Reload configuration & language");
         helpLine(sender, "/redeem <code>",                              "Redeem a gift code");
     }
 

@@ -1,16 +1,18 @@
 # ┌──────────────────────────────────────────────────────┐
-# │              GiftcodeX  ·  messages.yml              │
+# │          GiftcodeX  ·  messages_en.yml               │
+# │               Language: English                      │
 # └──────────────────────────────────────────────────────┘
-
-#   Legacy codes: &
-#   Hex colour: &#
+#
+# To use this language, set in config.yml:
+#   language: en
+#
+# Colour codes: &
+# Hex colours: &#
 
 prefix: "&8[&bGiftcodeX&8] "
 
 # Symbol displayed when a value is unlimited (player-max-uses: -1) or has no expiry
-# You can change this to any character, "∞", "Unlimited", "Forever", "N/A"
 infinity-symbol: "∞"
-
 
 redeemed:            "&aCode redeemed successfully!"
 invalid-code:        "&cThis gift code does not exist."
@@ -19,7 +21,7 @@ code-expired:        "&cThis gift code has expired."
 max-uses-reached:    "&cThis gift code has reached its global usage limit."
 already-redeemed:    "&cYou have already used this code the maximum allowed number of times."
 ip-limit-reached:    "&cThis gift code has been used too many times from your IP address."
-not-enough-playtime: "&cYou need at least &e{required} &cminutes of playtime to use this code. &7(You have: &e{current} &7min)"
+not-enough-playtime: "&cYou need at least &e{required} &cof playtime to use this code. &7(You have: &e{current}&7)"
 no-permission:       "&cYou do not have permission to use this gift code."
 assigned:            "&aYou have been granted a gift code by an administrator."
 

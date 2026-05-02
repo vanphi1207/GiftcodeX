@@ -14,6 +14,8 @@ public final class ConfigManager {
 
     private FileConfiguration cfg() { return plugin.getConfig(); }
 
+    public String getLanguage()               { return cfg().getString("language", "en").toLowerCase().trim(); }
+
     public String getDatabaseType()           { return cfg().getString("database.type", "H2"); }
     public boolean isUpdateCheckEnabled()     { return cfg().getBoolean("check-update", true); }
     public String getRewardColor()            { return cfg().getString("gui.reward-color", "&a"); }

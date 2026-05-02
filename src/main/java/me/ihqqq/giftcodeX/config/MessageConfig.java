@@ -7,11 +7,28 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.logging.Level;
 
 public final class MessageConfig {
 
-    private static final Map<String, String> DEFAULTS = Map.ofEntries(
+    /** Supported language codes → their resource file names */
+    private static final Map<String, String> LANGUAGE_FILES = Map.of(
+            "en", "messages_en.yml",
+            "vi", "messages_vi.yml"
+    );
+
+    /** Default language when an unknown code is configured */
+    private static final String DEFAULT_LANGUAGE = "en";
+
+    /**
+     * Hard-coded English fallbacks used when a key is missing in the
+     * active language file (prevents NPEs / blank messages).
+     */
+    private static final Map<String, String> FALLBACKS = Map.ofEntries(
             Map.entry("prefix",              "&8[&bGiftCodeX&8] "),
             Map.entry("infinity-symbol",     "∞"),
             Map.entry("redeemed",            "&aCode redeemed successfully!"),
@@ -21,7 +38,7 @@ public final class MessageConfig {
             Map.entry("max-uses-reached",    "&cThis code has reached its global limit."),
             Map.entry("already-redeemed",    "&cYou have already used this code the maximum number of times."),
             Map.entry("ip-limit-reached",    "&cThis code has been used too many times from your IP address."),
-            Map.entry("not-enough-playtime", "&cYou need &e{required}&c minutes of playtime. &7(Current: &e{current}&7)"),
+            Map.entry("not-enough-playtime", "&cYou need &e{required}&c of playtime. &7(Current: &e{current}&7)"),
             Map.entry("no-permission",       "&cYou do not have permission to use this code."),
             Map.entry("assigned",            "&aYou have been granted a gift code by an administrator."),
             Map.entry("code-created",        "&aGift code &e{code} &acreated successfully."),
@@ -40,40 +57,86 @@ public final class MessageConfig {
     );
 
     private final GiftcodeX plugin;
+
+    /** Currently active language file configuration */
     private FileConfiguration cfg;
+
+    /** Currently loaded language code */
+    private String currentLanguage;
 
     public MessageConfig(GiftcodeX plugin) {
         this.plugin = plugin;
-        plugin.saveResource("messages.yml", false);
+        ensureLanguageFilesExist();
         reload();
     }
 
+
     public void reload() {
-        cfg = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "messages.yml"));
+        currentLanguage = resolveLanguage(plugin.getConfigManager().getLanguage());
+        String fileName = LANGUAGE_FILES.get(currentLanguage);
+
+        ensureLanguageFilesExist();
+
+        File file = new File(plugin.getDataFolder(), fileName);
+        cfg = YamlConfiguration.loadConfiguration(file);
+
+        InputStream resource = plugin.getResource(fileName);
+        if (resource != null) {
+            FileConfiguration defaults = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(resource, StandardCharsets.UTF_8));
+            cfg.setDefaults(defaults);
+        }
+
+        plugin.getLogger().info("Language loaded: " + currentLanguage + " (" + fileName + ")");
+    }
+
+    public String getLanguage() {
+        return currentLanguage;
     }
 
     public String getInfinitySymbol() {
-        return cfg.getString("infinity-symbol", DEFAULTS.get("infinity-symbol"));
+        return cfg.getString("infinity-symbol", FALLBACKS.get("infinity-symbol"));
     }
 
     public String get(String key) {
         return get(key, Map.of());
     }
 
-
     public String get(String key, Map<String, String> placeholders) {
-        String prefix = cfg.getString("prefix", DEFAULTS.get("prefix"));
-        String raw    = cfg.getString(key, DEFAULTS.getOrDefault(key, "&c[Missing: " + key + "]"));
+        String prefix = cfg.getString("prefix", FALLBACKS.get("prefix"));
+        String raw    = cfg.getString(key, FALLBACKS.getOrDefault(key, "&c[Missing: " + key + "]"));
 
         String result = prefix + raw;
         for (Map.Entry<String, String> e : placeholders.entrySet()) {
             result = result.replace("{" + e.getKey() + "}", e.getValue());
         }
-
         return ColorUtil.colorize(result);
     }
 
     public String getForResult(RedeemResult result) {
         return get(result.getMessageKey());
+    }
+
+    private void ensureLanguageFilesExist() {
+        for (String fileName : LANGUAGE_FILES.values()) {
+            File target = new File(plugin.getDataFolder(), fileName);
+            if (!target.exists()) {
+                try {
+                    plugin.saveResource(fileName, false);
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().log(Level.WARNING,
+                            "Could not save bundled resource: " + fileName, e);
+                }
+            }
+        }
+    }
+
+    private String resolveLanguage(String configured) {
+        if (LANGUAGE_FILES.containsKey(configured)) return configured;
+        plugin.getLogger().warning(
+                "Unknown language '" + configured + "' in config.yml. "
+                        + "Falling back to '" + DEFAULT_LANGUAGE + "'. "
+                        + "Available languages: " + String.join(", ", LANGUAGE_FILES.keySet()));
+        return DEFAULT_LANGUAGE;
     }
 }

@@ -1,0 +1,40 @@
+# ┌──────────────────────────────────────────────────────┐
+# │          GiftcodeX  ·  messages_vi.yml               │
+# │            Ngôn ngữ: Tiếng Việt                      │
+# └──────────────────────────────────────────────────────┘
+#
+# Để sử dụng ngôn ngữ này, đặt trong config.yml:
+#   language: vi
+#
+# Mã màu: &
+# Màu Hex: &#
+
+prefix: "&8[&bGiftcodeX&8] "
+
+# Ký hiệu hiển thị khi giá trị là không giới hạn (player-max-uses: -1) hoặc không có thời hạn
+infinity-symbol: "∞"
+
+redeemed:            "&aNhập code thành công!"
+invalid-code:        "&cCode quà tặng này không tồn tại."
+code-disabled:       "&cCode quà tặng này hiện đang bị vô hiệu hóa."
+code-expired:        "&cCode quà tặng này đã hết hạn."
+max-uses-reached:    "&cCode quà tặng này đã đạt giới hạn sử dụng toàn server."
+already-redeemed:    "&cBạn đã sử dụng code này đủ số lần cho phép."
+ip-limit-reached:    "&cCode quà tặng này đã được sử dụng quá nhiều lần từ địa chỉ IP của bạn."
+not-enough-playtime: "&cBạn cần ít nhất &e{required} &cthời gian chơi để sử dụng code này. &7(Hiện tại: &e{current}&7)"
+no-permission:       "&cBạn không có quyền sử dụng code quà tặng này."
+assigned:            "&aBạn đã được quản trị viên tặng một code quà tặng."
+
+code-created:         "&aTạo code quà tặng &e{code} &athành công."
+code-deleted:         "&aĐã xóa code quà tặng &e{code}&a."
+code-enabled:         "&aĐã kích hoạt code quà tặng &e{code}&a."
+code-disabled-admin:  "&cĐã vô hiệu hóa code quà tặng &e{code}&c."
+code-not-found:       "&cKhông tìm thấy code quà tặng &e{code}&c."
+code-already-exists:  "&cCode quà tặng tên &e{code} &cđã tồn tại."
+player-not-found:     "&cNgười chơi &e{player} &ckhông trực tuyến hoặc không tồn tại."
+no-permission-admin:  "&cBạn không có quyền sử dụng lệnh này."
+plugin-reloaded:      "&aĐã tải lại cấu hình plugin thành công."
+random-generated:     "&aĐã tạo &e{amount} &acode ngẫu nhiên với tiền tố &e{prefix}&a."
+permission-set:       "&aĐã đặt quyền cho &e{code} &athành &b{permission}&a."
+permission-cleared:   "&aĐã xóa yêu cầu quyền cho &e{code}&a."
+items-saved:          "&aĐã lưu &e{count} &avật phẩm thưởng cho code &e{code}&a."
