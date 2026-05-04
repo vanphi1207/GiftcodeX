@@ -24,6 +24,15 @@ public final class DatabaseManager {
             )
             """;
 
+    private static final String CREATE_COOLDOWN_TABLE_SQL = """
+            CREATE TABLE IF NOT EXISTS cooldown_timestamps (
+                uuid        VARCHAR(36) NOT NULL,
+                code        VARCHAR(64) NOT NULL,
+                last_redeem BIGINT      NOT NULL DEFAULT 0,
+                PRIMARY KEY (uuid, code)
+            )
+            """;
+
     private final GiftcodeX plugin;
     private HikariDataSource dataSource;
     private Type activeType;
@@ -69,6 +78,7 @@ public final class DatabaseManager {
         try (Connection conn = dataSource.getConnection();
              Statement stmt  = conn.createStatement()) {
             stmt.execute(CREATE_TABLE_SQL);
+            stmt.execute(CREATE_COOLDOWN_TABLE_SQL);
         }
     }
 

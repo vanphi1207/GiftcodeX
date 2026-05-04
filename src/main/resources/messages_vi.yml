@@ -23,6 +23,7 @@ already-redeemed:    "&cBạn đã sử dụng code này đủ số lần cho ph
 ip-limit-reached:    "&cCode quà tặng này đã được sử dụng quá nhiều lần từ địa chỉ IP của bạn."
 not-enough-playtime: "&cBạn cần ít nhất &e{required} &cthời gian chơi để sử dụng code này. &7(Hiện tại: &e{current}&7)"
 no-permission:       "&cBạn không có quyền sử dụng code quà tặng này."
+on-cooldown:         "&cCode này đang trong thời gian chờ. Vui lòng đợi &e{remaining}&c trước khi dùng lại."
 assigned:            "&aBạn đã được quản trị viên tặng một code quà tặng."
 
 code-created:         "&aTạo code quà tặng &e{code} &athành công."

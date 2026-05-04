@@ -31,6 +31,8 @@ import java.util.Optional;
  *  %giftcodex_code_canuseip_<code>%
  *  %giftcodex_code_playerlimit_<code>%
  *  %giftcodex_code_iplimit_<code>%
+ *  %giftcodex_code_cooldown_<code>%
+ *  %giftcodex_code_cooldownleft_<code>%
  */
 public final class GiftcodeExpansion extends PlaceholderExpansion {
 
@@ -117,6 +119,18 @@ public final class GiftcodeExpansion extends PlaceholderExpansion {
 
             case "playerlimit" -> opt.map(gc -> gc.isUnlimitedPlayerUses() ? inf : String.valueOf(gc.getPlayerMaxUses())).orElse("0");
             case "iplimit"     -> opt.map(gc -> gc.hasIpRestriction() ? String.valueOf(gc.getMaxUsesPerIp()) : inf).orElse("0");
+
+            case "cooldown" -> opt.map(gc -> gc.hasCooldown() ? String.valueOf(gc.getCooldownSeconds()) : "0").orElse("0");
+
+            case "cooldownleft" -> {
+                if (player == null || opt.isEmpty()) yield "0s";
+                Giftcode gc = opt.get();
+                if (!gc.hasCooldown()) yield "0s";
+                long lastTime    = playerDataManager.getLastRedeemTime(player.getUniqueId(), codeName);
+                if (lastTime == 0) yield "0s";
+                long remainingMs = gc.getCooldownSeconds() * 1000L - (System.currentTimeMillis() - lastTime);
+                yield remainingMs > 0 ? me.ihqqq.giftcodeX.command.RedeemCommand.formatRemaining(remainingMs) : "0s";
+            }
 
             default -> null;
         };

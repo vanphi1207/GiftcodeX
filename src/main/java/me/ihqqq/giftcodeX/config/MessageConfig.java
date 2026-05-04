@@ -15,19 +15,13 @@ import java.util.logging.Level;
 
 public final class MessageConfig {
 
-    /** Supported language codes → their resource file names */
     private static final Map<String, String> LANGUAGE_FILES = Map.of(
             "en", "messages_en.yml",
             "vi", "messages_vi.yml"
     );
 
-    /** Default language when an unknown code is configured */
     private static final String DEFAULT_LANGUAGE = "en";
 
-    /**
-     * Hard-coded English fallbacks used when a key is missing in the
-     * active language file (prevents NPEs / blank messages).
-     */
     private static final Map<String, String> FALLBACKS = Map.ofEntries(
             Map.entry("prefix",              "&8[&bGiftCodeX&8] "),
             Map.entry("infinity-symbol",     "∞"),
@@ -40,6 +34,7 @@ public final class MessageConfig {
             Map.entry("ip-limit-reached",    "&cThis code has been used too many times from your IP address."),
             Map.entry("not-enough-playtime", "&cYou need &e{required}&c of playtime. &7(Current: &e{current}&7)"),
             Map.entry("no-permission",       "&cYou do not have permission to use this code."),
+            Map.entry("on-cooldown",         "&cThis code is on cooldown. Please wait &e{remaining}&c before using it again."),
             Map.entry("assigned",            "&aYou have been granted a gift code by an administrator."),
             Map.entry("code-created",        "&aGift code &e{code} &acreated successfully."),
             Map.entry("code-deleted",        "&aGift code &e{code} &adeleted."),
@@ -58,10 +53,8 @@ public final class MessageConfig {
 
     private final GiftcodeX plugin;
 
-    /** Currently active language file configuration */
     private FileConfiguration cfg;
 
-    /** Currently loaded language code */
     private String currentLanguage;
 
     public MessageConfig(GiftcodeX plugin) {

@@ -48,10 +48,33 @@ public final class RedeemCommand implements CommandExecutor {
                         "current",  current.toDisplayString()
                 )));
             });
+        } else if (result == RedeemResult.ON_COOLDOWN) {
+            plugin.getCodeManager().find(code).ifPresent(gc -> {
+                long lastTime   = plugin.getPlayerDataManager().getLastRedeemTime(player.getUniqueId(), code);
+                long elapsed    = System.currentTimeMillis() - lastTime;
+                long remainingMs = gc.getCooldownSeconds() * 1000L - elapsed;
+                player.sendMessage(plugin.getMessageConfig().get(result.getMessageKey(), Map.of(
+                        "remaining", formatRemaining(Math.max(0, remainingMs))
+                )));
+            });
         } else {
             player.sendMessage(plugin.getMessageConfig().getForResult(result));
         }
         return true;
+    }
+
+    public static String formatRemaining(long ms) {
+        if (ms <= 0) return "0s";
+        long sec = ms / 1000;
+        long min = sec / 60; sec %= 60;
+        long hr  = min / 60; min %= 60;
+        long day = hr  / 24; hr  %= 24;
+        StringBuilder sb = new StringBuilder();
+        if (day > 0) sb.append(day).append("d ");
+        if (hr  > 0) sb.append(hr).append("h ");
+        if (min > 0) sb.append(min).append("m ");
+        if (sec > 0 || sb.isEmpty()) sb.append(sec).append("s");
+        return sb.toString().trim();
     }
 
     private static PlaytimeDuration buildCurrentDuration(long ms) {

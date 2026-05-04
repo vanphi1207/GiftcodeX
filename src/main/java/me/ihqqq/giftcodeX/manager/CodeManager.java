@@ -134,7 +134,8 @@ public final class CodeManager {
                 .enabled(true)
                 .playerMaxUses(1)
                 .maxUsesPerIp(1)
-                .requiredPlaytime(PlaytimeDuration.zero());
+                .requiredPlaytime(PlaytimeDuration.zero())
+                .cooldownSeconds(plugin.getConfigManager().getDefaultCooldownSeconds());
     }
 
     public RedeemResult redeem(Player player, String rawCode) {
@@ -161,6 +162,17 @@ public final class CodeManager {
         PlayerData pd = playerDataManager.getOrCreate(player.getUniqueId());
         if (!gc.isUnlimitedPlayerUses() && pd.useCount(rawCode) >= gc.getPlayerMaxUses()) {
             return RedeemResult.ALREADY_REDEEMED;
+        }
+
+        if (gc.hasCooldown()) {
+            long lastTime = playerDataManager.getLastRedeemTime(player.getUniqueId(), rawCode);
+            if (lastTime > 0) {
+                long elapsed   = System.currentTimeMillis() - lastTime;
+                long cooldownMs = gc.getCooldownSeconds() * 1000L;
+                if (elapsed < cooldownMs) {
+                    return RedeemResult.ON_COOLDOWN;
+                }
+            }
         }
 
         if (gc.hasIpRestriction()) {

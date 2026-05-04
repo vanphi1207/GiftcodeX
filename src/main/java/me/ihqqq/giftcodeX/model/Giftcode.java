@@ -27,6 +27,7 @@ public final class Giftcode {
     private final int maxUsesPerIp;    // 0  = disabled
     private final PlaytimeDuration requiredPlaytime;
     private final boolean enabled;
+    private final long cooldownSeconds;  // 0 = disabled
 
     private Giftcode(Builder b) {
         this.code = Objects.requireNonNull(b.code, "code");
@@ -40,6 +41,7 @@ public final class Giftcode {
         this.maxUsesPerIp = b.maxUsesPerIp;
         this.requiredPlaytime = b.requiredPlaytime != null ? b.requiredPlaytime : PlaytimeDuration.zero();
         this.enabled = b.enabled;
+        this.cooldownSeconds = Math.max(0, b.cooldownSeconds);
     }
 
 
@@ -50,6 +52,7 @@ public final class Giftcode {
     public Giftcode withCommands(List<String> commands)               { return toBuilder().commands(commands).build(); }
     public Giftcode withMessages(List<String> messages)               { return toBuilder().messages(messages).build(); }
     public Giftcode withRequiredPlaytime(PlaytimeDuration d)          { return toBuilder().requiredPlaytime(d).build(); }
+    public Giftcode withCooldown(long seconds)                        { return toBuilder().cooldownSeconds(seconds).build(); }
 
 
     public boolean isExpired() {
@@ -70,6 +73,7 @@ public final class Giftcode {
     public boolean hasIpRestriction()          { return maxUsesPerIp > 0; }
     public boolean hasPlaytimeRequirement()    { return !requiredPlaytime.isZero(); }
     public boolean isUnlimitedPlayerUses()     { return playerMaxUses < 0; }
+    public boolean hasCooldown()               { return cooldownSeconds > 0; }
 
     public long getRequiredPlaytimeMinutes()   { return requiredPlaytime.toTotalMinutes(); }
 
@@ -84,7 +88,8 @@ public final class Giftcode {
                 .playerMaxUses(playerMaxUses)
                 .maxUsesPerIp(maxUsesPerIp)
                 .requiredPlaytime(requiredPlaytime)
-                .enabled(enabled);
+                .enabled(enabled)
+                .cooldownSeconds(cooldownSeconds);
     }
 
 
@@ -99,6 +104,7 @@ public final class Giftcode {
     public int getMaxUsesPerIp()                     { return maxUsesPerIp; }
     public PlaytimeDuration getRequiredPlaytime()    { return requiredPlaytime; }
     public boolean isEnabled()                       { return enabled; }
+    public long getCooldownSeconds()                 { return cooldownSeconds; }
 
 
     public static final class Builder {
@@ -113,6 +119,7 @@ public final class Giftcode {
         private int maxUsesPerIp = 1;
         private PlaytimeDuration requiredPlaytime = PlaytimeDuration.zero();
         private boolean enabled = true;
+        private long cooldownSeconds = 0;
 
         public Builder(String code) {
             this.code = Objects.requireNonNull(code, "code cannot be null");
@@ -129,6 +136,7 @@ public final class Giftcode {
         public Builder requiredPlaytime(PlaytimeDuration v)   { this.requiredPlaytime = v; return this; }
         public Builder requiredPlaytimeMinutes(int minutes)   { this.requiredPlaytime = PlaytimeDuration.ofMinutes(minutes); return this; }
         public Builder enabled(boolean v)                     { this.enabled = v; return this; }
+        public Builder cooldownSeconds(long v)                { this.cooldownSeconds = Math.max(0, v); return this; }
 
         public Giftcode build() { return new Giftcode(this); }
     }

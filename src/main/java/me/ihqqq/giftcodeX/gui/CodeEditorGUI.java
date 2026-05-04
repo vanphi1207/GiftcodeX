@@ -51,6 +51,7 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
     private static final int SLOT_COMMANDS   = 31;
     private static final int SLOT_MESSAGES   = 30;
     private static final int SLOT_ITEMS      = 32;
+    private static final int SLOT_COOLDOWN   = 29;
     private static final int SLOT_BACK       = 45;
     private static final int SLOT_SAVE       = 53;
 
@@ -110,6 +111,8 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 loreAction("click to edit"),
                 inputModeHint()));
 
+        inv.setItem(SLOT_COOLDOWN,   buildCooldownItem());
+
         inv.setItem(SLOT_COMMANDS, buildListItem(Material.COMMAND_BLOCK,
                 "commands • " + gc.getCommands().size(), gc.getCommands(), C_WARN));
 
@@ -128,6 +131,39 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
         return inv;
     }
 
+
+    private ItemStack buildCooldownItem() {
+        boolean hasCooldown = gc.hasCooldown();
+        long secs = gc.getCooldownSeconds();
+
+        String display;
+        if (!hasCooldown) {
+            display = "disabled";
+        } else {
+            long min = secs / 60;  long remSec = secs % 60;
+            long hr  = min  / 60;  min %= 60;
+            long day = hr   / 24;  hr  %= 24;
+            StringBuilder sb = new StringBuilder();
+            if (day > 0) sb.append(day).append("d ");
+            if (hr  > 0) sb.append(hr).append("h ");
+            if (min > 0) sb.append(min).append("m ");
+            if (remSec > 0 || sb.isEmpty()) sb.append(remSec).append("s");
+            display = sb.toString().trim();
+        }
+
+        List<String> lore = new ArrayList<>();
+        lore.add(loreLine("value", display, hasCooldown ? C_WARN : C_HINT));
+        lore.add(loreLine("seconds", hasCooldown ? String.valueOf(secs) : "0", C_VALUE));
+        lore.add("");
+        lore.add(C_HINT + sc("left -1s • right +1s • shift ±60s"));
+        lore.add(C_HINT + sc("Q • toggle disabled (0)"));
+
+        return new ItemBuilder(Material.SOUL_SAND)
+                .name(C_VALUE + sc("redeem cooldown"))
+                .lore(lore)
+                .glow(!hasCooldown)
+                .build();
+    }
 
     private ItemStack buildPlaytimeItem() {
         PlaytimeDuration pt  = gc.getRequiredPlaytime();
@@ -396,6 +432,19 @@ public final class CodeEditorGUI extends GiftGUI implements Listener {
                 new ItemEditorGUI(plugin, viewer, gc).open();
                 return;
             }
+            case SLOT_COOLDOWN -> {
+                if (drop) {
+                    gc = gc.withCooldown(0);
+                    viewer.playSound(viewer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5f, 1.5f);
+                } else {
+                    long delta = shift ? 60L : 1L;
+                    long cur   = gc.getCooldownSeconds();
+                    long next  = Math.max(0, cur + (right ? delta : -delta));
+                    gc = gc.withCooldown(next);
+                    viewer.playSound(viewer.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, next == 0 ? 0.8f : 1.1f);
+                }
+            }
+
             case SLOT_BACK -> {
                 plugin.getGuiListener().deregister(viewer.getUniqueId());
                 deregisterDialogHandler();

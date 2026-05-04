@@ -90,6 +90,7 @@ public final class YamlCodeRepository implements CodeRepository {
                 .requiredPlaytime(playtime)
                 .permission(config.getString(base + "permission", ""))
                 .itemRewards(items)
+                .cooldownSeconds(config.getLong(base + "cooldown-seconds", 0))
                 .build();
     }
 
@@ -126,6 +127,7 @@ public final class YamlCodeRepository implements CodeRepository {
         config.set(base + "enabled",           gc.isEnabled());
         config.set(base + "player-max-uses",   gc.getPlayerMaxUses());
         config.set(base + "max-uses-per-ip",   gc.getMaxUsesPerIp());
+        config.set(base + "cooldown-seconds",  gc.getCooldownSeconds());
         config.set(base + "permission",        gc.getPermission());
         config.set(base + "items",             gc.getItemRewards().isEmpty() ? null : gc.getItemRewards());
         serializePlaytime(base, gc.getRequiredPlaytime());

@@ -24,6 +24,7 @@ public final class ConfigManager {
     public int getDefaultPlayerMaxUses()      { return cfg().getInt("defaults.player-max-uses", 1); }
     public int getDefaultMaxUsesPerIp()       { return cfg().getInt("defaults.max-uses-per-ip", 1); }
     public int getDefaultRequiredPlaytime()   { return cfg().getInt("defaults.required-playtime", 0); }
+    public long getDefaultCooldownSeconds()   { return cfg().getLong("defaults.cooldown-seconds", 0); }
 
     public void reload() { plugin.reloadConfig(); }
 }

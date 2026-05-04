@@ -15,6 +15,7 @@
 #   player-max-uses   - Per-player redemption limit. -1 = unlimited.
 #   max-uses-per-ip   - Per-IP redemption limit. 0 = disabled.
 #   required-playtime - Minimum playtime in minutes. 0 = no requirement.
+#   cooldown-seconds  - Seconds a player must wait before redeeming again. 0 = disabled.
 #   permission        - Required permission node. Leave empty for none.
 #   items             - List of ItemStack serialized item rewards (set via GUI).
 
@@ -30,6 +31,7 @@ WELCOME2024:
   player-max-uses: 1
   max-uses-per-ip: 2
   required-playtime: 0
+  cooldown-seconds: 0
   permission: ""
   items: []
 
@@ -44,5 +46,6 @@ VIP_ONLY:
   player-max-uses: 1
   max-uses-per-ip: 1
   required-playtime: 60
+  cooldown-seconds: 0
   permission: "giftcodex.vip"
   items: []

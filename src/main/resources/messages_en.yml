@@ -23,6 +23,7 @@ already-redeemed:    "&cYou have already used this code the maximum allowed numb
 ip-limit-reached:    "&cThis gift code has been used too many times from your IP address."
 not-enough-playtime: "&cYou need at least &e{required} &cof playtime to use this code. &7(You have: &e{current}&7)"
 no-permission:       "&cYou do not have permission to use this gift code."
+on-cooldown:         "&cThis code is on cooldown. Please wait &e{remaining}&c before using it again."
 assigned:            "&aYou have been granted a gift code by an administrator."
 
 code-created:         "&aGift code &e{code} &acreated successfully."

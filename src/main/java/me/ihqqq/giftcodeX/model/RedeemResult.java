@@ -11,6 +11,7 @@ public enum RedeemResult {
     IP_LIMIT_REACHED("ip-limit-reached"),
     NOT_ENOUGH_PLAYTIME("not-enough-playtime"),
     NO_PERMISSION("no-permission"),
+    ON_COOLDOWN("on-cooldown"),
     ASSIGNED("assigned");
 
     private final String messageKey;
